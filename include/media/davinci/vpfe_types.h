@@ -21,7 +21,7 @@
 #ifdef __KERNEL__
 
 enum vpfe_pin_pol {
-	VPFE_PINPOL_POSITIVE,
+	VPFE_PINPOL_POSITIVE = 0,
 	VPFE_PINPOL_NEGATIVE
 };
 
@@ -32,12 +32,16 @@ enum vpfe_hw_if_type {
 	VPFE_BT1120,
 	/* Raw Bayer */
 	VPFE_RAW_BAYER,
-	/* YCbCr - 8 bit with external sync */
+	/* YCbCr - 8 bit with external sync (input through C[0-7]) */
 	VPFE_YCBCR_SYNC_8,
 	/* YCbCr - 16 bit with external sync */
 	VPFE_YCBCR_SYNC_16,
 	/* BT656 - 10 bit */
-	VPFE_BT656_10BIT
+	VPFE_BT656_10BIT,
+	/* YCbCr - 16 bit with external sync (swap bytes at DM365 input) */
+	VPFE_YCBCR_SYNC_16_SWAP,
+	/* YCbCr - 8 bit with external sync (input through Y[0-7]) */
+	VPFE_YCBCR_SYNC_8_SWAP,
 };
 
 /* interface description */
@@ -45,6 +49,9 @@ struct vpfe_hw_if_param {
 	enum vpfe_hw_if_type if_type;
 	enum vpfe_pin_pol hdpol;
 	enum vpfe_pin_pol vdpol;
+	/* If the camera is sending 8-bit YCbCr data, then ycbcr8_y_then_c
+	   selects the phase */
+	int ycbcr8_y_then_c;
 };
 
 #endif

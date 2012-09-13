@@ -68,7 +68,9 @@ enum vpfe_subdev_id {
 	VPFE_SUBDEV_TVP5146 = 1,
 	VPFE_SUBDEV_MT9T031 = 2,
 	VPFE_SUBDEV_TVP7002 = 3,
-   VPFE_SUBDEV_MT9P031 = 4,
+	VPFE_SUBDEV_MT9P031 = 4,
+	VPFE_SUBDEV_OV10633 = 5,
+	VPFE_SUBDEV_FLIRTAU2 = 6
 };
 
 struct vpfe_subdev_info {
@@ -88,6 +90,10 @@ struct vpfe_subdev_info {
 	struct i2c_board_info board_info;
 	/* Is this a camera sub device ? */
 	unsigned is_camera:1;
+        /* Is this camera mono only -> if yes, then suppress chroma */
+        unsigned is_mono_camera:1;
+        /* Is this camera ycc -> if yes, then no bayer processing */
+        unsigned is_ycc_camera:1;
 	/* check if sub dev supports routing */
 	unsigned can_route:1;
 	/* registered ? */

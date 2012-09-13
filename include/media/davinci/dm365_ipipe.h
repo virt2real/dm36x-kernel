@@ -1045,6 +1045,15 @@ struct rsz_output_spec {
 	/* C offset. If set, the offset would be added to the base address
 	 */
 	unsigned int user_c_ofst;
+
+	/* x offset in the source window */
+	unsigned int source_x;
+	/* y offset in the source window */
+	unsigned int source_y;
+	/* width of the source window */
+	unsigned int source_width;
+	/* height of the source window */
+	unsigned int source_height;
 };
 
 /* In continuous mode, few parameters are set by ccdc driver. So only
@@ -1183,6 +1192,8 @@ struct f_div_param {
 
 /* Resizer Rescale Parameters*/
 struct ipipe_rsz_rescale_param {
+	unsigned char skip_resize_ratio_calculation;
+
 	enum ipipe_oper_mode mode;
 	enum enable_disable_t h_flip;
 	enum enable_disable_t v_flip;

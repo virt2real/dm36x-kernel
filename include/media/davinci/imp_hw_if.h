@@ -140,6 +140,8 @@ struct imp_hw_interface {
 	/* Below APIs assume we are using shared configuration since
 	 * oper mode is continuous
 	 */
+	/* Set the chroma limits. Useful for mono inputs to force chroma. */
+	int (*set_chroma_limits) (unsigned char low, unsigned char high);
 	/* Set the input crop window at the IMP interface and IMP */
 	int (*set_input_win) (struct imp_window *win);
 	/* Get current input crop window param at the IMP */
@@ -157,7 +159,7 @@ struct imp_hw_interface {
 	/* Set the output window at the IMP, output selection
 	 * done by out_sel. 0 - output 1 and 1 - output 2
 	 */
-	int (*set_output_win) (struct imp_window *win);
+	int (*set_output_win) (struct imp_window *win, struct imp_window *input_win, int requested_line_length);
 	/* Get output enable/disable status */
 	int (*get_output_state) (unsigned char out_sel);
 	/* Get output line lenght */

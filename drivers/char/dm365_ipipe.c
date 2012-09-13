@@ -423,13 +423,14 @@ static int ipipe_serialize(void)
 static void ipipe_dump_hw_config(void);
 
 /* APIs for CCDC driver */
+static int ipipe_set_chroma_limits(unsigned char low, unsigned char high);
 static int ipipe_set_input_win(struct imp_window *);
 static int ipipe_get_input_win(struct imp_window *);
 static int ipipe_set_in_pixel_format(enum imp_pix_formats);
 static int ipipe_set_out_pixel_format(enum imp_pix_formats);
 static int ipipe_set_buftype(unsigned char);
 static int ipipe_set_frame_format(unsigned char);
-static int ipipe_set_output_win(struct imp_window *win);
+static int ipipe_set_output_win(struct imp_window *win, struct imp_window *input_win, int requested_line_length);
 static int ipipe_get_output_state(unsigned char out_sel);
 static int ipipe_get_line_length(unsigned char out_sel);
 static int ipipe_get_image_height(unsigned char out_sel);
@@ -466,6 +467,7 @@ struct imp_hw_interface dm365_ipipe_interface = {
 	.get_resizer_config_state = ipipe_get_rsz_config_state,
 	.get_previewer_config_state = ipipe_get_prev_config_state,
 	/* Below used by CCDC driver to set input and output params */
+	.set_chroma_limits = ipipe_set_chroma_limits,
 	.set_input_win = ipipe_set_input_win,
 	.get_input_win = ipipe_get_input_win,
 	.set_hw_if_param = ipipe_set_hw_if_param,
@@ -591,6 +593,9 @@ static int ipipe_process_pix_fmts(enum ipipe_pix_formats in_pix_fmt,
  */ 
 static void calculate_resize_ratios(struct ipipe_params *param, int index)
 {
+	if (param->rsz_rsc_param[index].skip_resize_ratio_calculation)
+		return;
+
 	param->rsz_rsc_param[index].h_dif =
 	    ((param->ipipe_hsz + 1) * 256) /
 	    (param->rsz_rsc_param[index].o_hsz + 1);
@@ -2685,6 +2690,27 @@ static int configure_resizer_out_params(struct ipipe_params *param,
 			param->ext_mem_param[index].rsz_sdr_ptr_e_c =
 			    output->height;
 
+			/* Set the source window if it was specified. */
+			if (output->source_width > 0 &&
+			    output->source_height > 0) {
+				param->rsz_rsc_param[index].i_vps = output->source_y;
+				param->rsz_rsc_param[index].i_hps = output->source_x;
+
+				param->rsz_rsc_param[index].h_dif =
+					(output->source_width * 256) / output->width;
+				param->rsz_rsc_param[index].v_dif =
+					(output->source_height * 256) / output->height;
+				
+				/* We calculated the resize ratio, so don't do it again. */
+				param->rsz_rsc_param[index].skip_resize_ratio_calculation = 1;
+			} else {
+				param->rsz_rsc_param[index].i_vps = 0;
+				param->rsz_rsc_param[index].i_hps = 0;
+				/* Proceed with the resize ratio calculation like normal. */
+				param->rsz_rsc_param[index].skip_resize_ratio_calculation = 0;
+			
+			}
+
 			if (flag) {
 				/* update common parameters */
 				param->rsz_rsc_param[index].h_flip =
@@ -3743,6 +3769,22 @@ struct imp_hw_interface *imp_get_hw_if(void)
 EXPORT_SYMBOL(imp_get_hw_if);
 
 /* APIs for CCDC driver */
+static int ipipe_set_chroma_limits(unsigned char low, unsigned char high)
+{
+	int ret;
+	struct ipipe_params *param = oper_state.shared_config_param;
+
+	ret = mutex_lock_interruptible(&oper_state.lock);
+	if (ret)
+		return ret;
+
+	param->rsz_common.yuv_c_min = low;
+	param->rsz_common.yuv_c_max = high;
+
+	mutex_unlock(&oper_state.lock);
+	return 0;
+}
+
 static int ipipe_set_input_win(struct imp_window *win)
 {
 	int ret;
@@ -3858,7 +3900,9 @@ static int ipipe_set_frame_format(unsigned char frm_fmt)
 	return 0;
 }
 
-static int ipipe_set_output_win(struct imp_window *win)
+static int ipipe_set_output_win(struct imp_window *win, 
+				struct imp_window *input_win, 
+				int requested_line_length)
 {
 	struct ipipe_params *param = oper_state.shared_config_param;
 	struct rsz_output_spec output_specs;
@@ -3873,9 +3917,16 @@ static int ipipe_set_output_win(struct imp_window *win)
 	   for de-interlacing
 	 */
 	output_specs.height = win->height;
+	output_specs.source_x = 0;
+	output_specs.source_y = 0;
+	output_specs.source_width = input_win->width;
+	output_specs.source_height = input_win->height;
 	output_specs.vst_y = win->vst;
 	if (oper_state.out_pixel_format == IPIPE_YUV420SP)
 		output_specs.vst_c = win->vst;
+	else
+		output_specs.vst_c = 0;
+
 	ret = mutex_lock_interruptible(&oper_state.lock);
 	if (ret)
 		return ret;
@@ -3895,6 +3946,16 @@ static int ipipe_set_output_win(struct imp_window *win)
 		mutex_unlock(&oper_state.lock);
 		return ret;
 	}
+	if (requested_line_length != 0) {
+		if (requested_line_length < line_len) {
+                	printk(KERN_ERR "Requested line length is less than calculated\n");
+			mutex_unlock(&oper_state.lock);
+			return -1;
+		}
+		line_len = requested_line_length;
+		line_len_c = requested_line_length;
+	}
+
 	param->ext_mem_param[0].rsz_sdr_oft_y = line_len;
 	param->ext_mem_param[0].rsz_sdr_oft_c = line_len_c;
 	calculate_resize_ratios(param, RSZ_A);
@@ -3961,6 +4022,9 @@ int ipipe_set_hw_if_param(struct vpfe_hw_if_param *if_param)
 	if (ret)
 		return ret;
 	param->ipipeif_param.var.if_5_1.isif_port = *if_param;
+	param->ipipeif_param.var.if_5_1.pix_order = 
+	  (if_param->ycbcr8_y_then_c ? IPIPEIF_Y_CBCR : IPIPEIF_CBCR_Y);
+
 	mutex_unlock(&oper_state.lock);
 	return 0;
 }

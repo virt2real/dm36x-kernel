@@ -905,6 +905,7 @@ static int ccdc_set_hw_if_params(struct vpfe_hw_if_param *params)
 	switch (params->if_type) {
 	case VPFE_BT656:
 	case VPFE_YCBCR_SYNC_16:
+	case VPFE_YCBCR_SYNC_16_SWAP:
 	case VPFE_YCBCR_SYNC_8:
 		ccdc_hw_params_ycbcr.vd_pol = params->vdpol;
 		ccdc_hw_params_ycbcr.hd_pol = params->hdpol;

@@ -1179,13 +1179,19 @@ static int ccdc_set_hw_if_params(struct vpfe_hw_if_param *params)
 	case VPFE_BT656:
 	case VPFE_BT656_10BIT:
 	case VPFE_YCBCR_SYNC_8:
+	case VPFE_YCBCR_SYNC_8_SWAP:
 		ccdc_cfg.ycbcr.pix_fmt = CCDC_PIXFMT_YCBCR_8BIT;
 		ccdc_cfg.ycbcr.pix_order = CCDC_PIXORDER_CBYCRY;
+		ccdc_cfg.ycbcr.vd_pol = params->vdpol;
+		ccdc_cfg.ycbcr.hd_pol = params->hdpol;
 		break;
 	case VPFE_BT1120:
 	case VPFE_YCBCR_SYNC_16:
+	case VPFE_YCBCR_SYNC_16_SWAP:
 		ccdc_cfg.ycbcr.pix_fmt = CCDC_PIXFMT_YCBCR_16BIT;
 		ccdc_cfg.ycbcr.pix_order = CCDC_PIXORDER_CBYCRY;
+		ccdc_cfg.ycbcr.vd_pol = params->vdpol;
+		ccdc_cfg.ycbcr.hd_pol = params->hdpol;
 		break;
 	case VPFE_RAW_BAYER:
 		ccdc_cfg.bayer.pix_fmt = CCDC_PIXFMT_RAW;
@@ -1308,6 +1314,13 @@ static int ccdc_config_ycbcr(int mode)
 
 	case VPFE_YCBCR_SYNC_8:
 		ccdcfg |= CCDC_DATA_PACK8;
+		if (params->pix_fmt != CCDC_PIXFMT_YCBCR_8BIT) {
+			dev_dbg(dev, "Invalid pix_fmt(input mode)\n");
+			return -EINVAL;
+		}
+		break;
+	case VPFE_YCBCR_SYNC_8_SWAP:
+		ccdcfg |= CCDC_DATA_PACK8;
 		ccdcfg |= CCDC_YCINSWP_YCBCR;
 		if (params->pix_fmt != CCDC_PIXFMT_YCBCR_8BIT) {
 			dev_dbg(dev, "Invalid pix_fmt(input mode)\n");
@@ -1315,6 +1328,13 @@ static int ccdc_config_ycbcr(int mode)
 		}
 		break;
 	case VPFE_YCBCR_SYNC_16:
+		if (params->pix_fmt != CCDC_PIXFMT_YCBCR_16BIT) {
+			dev_dbg(dev, "Invalid pix_fmt(input mode)\n");
+			return -EINVAL;
+		}
+		break;
+	case VPFE_YCBCR_SYNC_16_SWAP:
+		ccdcfg |= CCDC_YCINSWP_YCBCR;
 		if (params->pix_fmt != CCDC_PIXFMT_YCBCR_16BIT) {
 			dev_dbg(dev, "Invalid pix_fmt(input mode)\n");
 			return -EINVAL;
@@ -1336,7 +1356,8 @@ static int ccdc_config_ycbcr(int mode)
 
 	/* configure video window */
 	if ((ccdc_cfg.if_type == VPFE_BT1120) ||
-	    (ccdc_cfg.if_type == VPFE_YCBCR_SYNC_16))
+	    (ccdc_cfg.if_type == VPFE_YCBCR_SYNC_16) ||
+	    (ccdc_cfg.if_type == VPFE_YCBCR_SYNC_16_SWAP))
 		ccdc_setwin(&params->win, params->frm_fmt, 1, mode);
 	else
 		ccdc_setwin(&params->win, params->frm_fmt, 2, mode);
@@ -1464,11 +1485,13 @@ static int __init dm365_ccdc_probe(struct platform_device *pdev)
 		i++;
 	}
 
-	davinci_cfg_reg(DM365_VIN_CAM_WEN);
 	davinci_cfg_reg(DM365_VIN_CAM_VD);
 	davinci_cfg_reg(DM365_VIN_CAM_HD);
+#if 0 // FAH - Not all video inputs use this. Not sure why it is here
+	davinci_cfg_reg(DM365_VIN_CAM_WEN);
 	davinci_cfg_reg(DM365_VIN_YIN4_7_EN);
 	davinci_cfg_reg(DM365_VIN_YIN0_3_EN);
+#endif
 
 	printk(KERN_NOTICE "%s is registered with vpfe.\n",
 		ccdc_hw_dev.name);

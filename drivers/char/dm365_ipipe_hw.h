@@ -485,6 +485,7 @@
 #define RSZA_V_FLIP_SHIFT		(1)
 #define RSZB_H_FLIP_SHIFT		(2)
 #define RSZB_V_FLIP_SHIFT		(3)
+#define RSZ_SEQ_CRV_SHIFT               (4)
 #define RSZ_A				(0)
 #define RSZ_B				(1)
 #define RSZ_CEN_SHIFT			(1)

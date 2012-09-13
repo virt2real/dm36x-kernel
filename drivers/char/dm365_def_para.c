@@ -220,6 +220,7 @@ struct ipipe_params dm365_ipipe_defs = {
 	},
 	.rsz_rsc_param = {
 		{
+                        .skip_resize_ratio_calculation = 0,
 			.mode = ONE_SHOT,
 			.h_flip = DISABLE,
 			.v_flip = DISABLE,
@@ -248,6 +249,7 @@ struct ipipe_params dm365_ipipe_defs = {
 			.f_div.en = 0
 		},
 		{
+                        .skip_resize_ratio_calculation = 0,
 			.mode = ONE_SHOT,
 			.h_flip = DISABLE,
 			.v_flip = DISABLE,
@@ -402,7 +404,11 @@ struct rsz_single_shot_config dm365_rsz_ss_config_defs = {
 		.h_dscale_ave_sz = IPIPE_DWN_SCALE_1_OVER_2,
 		.v_dscale_ave_sz = IPIPE_DWN_SCALE_1_OVER_2,
 		.user_y_ofst = 0,
-		.user_c_ofst = 0
+		.user_c_ofst = 0,
+		.source_x = 0,
+		.source_y = 0,
+		.source_width = 0,
+		.source_height = 0,
 	},
 	.output2 = {
 		.enable = 1,
@@ -425,7 +431,11 @@ struct rsz_single_shot_config dm365_rsz_ss_config_defs = {
 		.h_dscale_ave_sz = IPIPE_DWN_SCALE_1_OVER_2,
 		.v_dscale_ave_sz = IPIPE_DWN_SCALE_1_OVER_2,
 		.user_y_ofst = 0,
-		.user_c_ofst = 0
+		.user_c_ofst = 0,
+		.source_x = 0,
+		.source_y = 0,
+		.source_width = 0,
+		.source_height = 0,
 	},
 	.chroma_sample_even = 0,
 	.yuv_y_min = 0,
@@ -475,7 +485,11 @@ struct rsz_continuous_config dm365_rsz_cont_config_defs = {
 		.h_dscale_ave_sz = IPIPE_DWN_SCALE_1_OVER_2,
 		.v_dscale_ave_sz = IPIPE_DWN_SCALE_1_OVER_2,
 		.user_y_ofst = 0,
-		.user_c_ofst = 0
+		.user_c_ofst = 0,
+		.source_x = 0,
+		.source_y = 0,
+		.source_width = 0,
+		.source_height = 0,
 	},
 	.chroma_sample_even = 0,
 	.yuv_y_min = 0,

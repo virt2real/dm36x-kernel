@@ -186,6 +186,7 @@ int ipipeif_hw_setup(struct ipipeif *params)
 				/* configure CFG2 */
 				switch (isif_port_if) {
 					case VPFE_YCBCR_SYNC_16:
+					case VPFE_YCBCR_SYNC_16_SWAP:
 						utemp |=
 						    (0 <<
 						     IPIPEIF_CFG2_YUV8_SHIFT);
@@ -250,6 +251,7 @@ int ipipeif_hw_setup(struct ipipeif *params)
 				    << IPIPEIF_CFG2_VDPOL_SHIFT;
 				switch (isif_port_if) {
 				case VPFE_YCBCR_SYNC_16:
+				case VPFE_YCBCR_SYNC_16_SWAP:
 				case VPFE_BT1120:
 					{
 						utemp |=
@@ -262,6 +264,7 @@ int ipipeif_hw_setup(struct ipipeif *params)
 					}
 				case VPFE_BT656:
 				case VPFE_YCBCR_SYNC_8:
+				case VPFE_YCBCR_SYNC_8_SWAP:
 				case VPFE_BT656_10BIT:
 					{
 						utemp |=

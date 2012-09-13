@@ -330,6 +330,10 @@ static void rsz_set_rsz_regs(unsigned int rsz_id, struct ipipe_params *params)
 		utemp |= rsc_params->v_flip << RSZB_V_FLIP_SHIFT;
 		reg_base = RSZ_EN_B;
 	}
+	/* Make sure that the chroma position is set correctly */
+	utemp &= ~(1 << RSZ_SEQ_CRV_SHIFT);
+	utemp |= params->rsz_common.rsz_seq_crv << RSZ_SEQ_CRV_SHIFT;
+
 	/* update flip settings */
 	regw_rsz(utemp, RSZ_SEQ);
 

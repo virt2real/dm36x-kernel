@@ -432,7 +432,11 @@ static int vpfe_config_ccdc_image_format(struct vpfe_device *vpfe_dev)
 
 	/* At CCDC we need to set pix format based on source. */
 	if (vpfe_dev->imp_chained) {
-		if (vpfe_dev->current_subdev->is_camera)
+		if (vpfe_dev->current_subdev->is_mono_camera)
+			pix_fmt = V4L2_PIX_FMT_UYVY;
+		else if (vpfe_dev->current_subdev->is_ycc_camera)
+                        pix_fmt = V4L2_PIX_FMT_YUYV;
+		else if (vpfe_dev->current_subdev->is_camera)
 			pix_fmt = V4L2_PIX_FMT_SBGGR16;
 		else if (pix_fmt == V4L2_PIX_FMT_NV12)
 			pix_fmt = V4L2_PIX_FMT_UYVY;
@@ -1362,10 +1366,11 @@ static int vpfe_config_imp_image_format(struct vpfe_device *vpfe_dev)
 			vpfe_dev->current_subdev;
 	int ret = -EINVAL, bytesperline;
 	enum imp_pix_formats imp_pix;
-	struct imp_window imp_win;
+	struct imp_window imp_input_win;
+	struct imp_window imp_output_win;
 
 	/* first setup input and output pixel formats */
-	if (sdinfo->is_camera)
+	if (sdinfo->is_camera && !sdinfo->is_mono_camera && !sdinfo->is_ycc_camera)
 		imp_pix = IMP_BAYER;
 	else
 		imp_pix = IMP_UYVY;
@@ -1406,27 +1411,37 @@ static int vpfe_config_imp_image_format(struct vpfe_device *vpfe_dev)
 		goto imp_exit;
 	}
 
+	/* If mono camera, then constrain the chrominance. */
+	if (sdinfo->is_mono_camera) {
+		if (imp_hw_if->set_chroma_limits(128, 128) < 0) {
+			v4l2_err(&vpfe_dev->v4l2_dev, 
+				 "Error in setting chroma limits"
+				 " in IMP\n");
+			goto imp_exit;
+		}
+	}
+
 	/**
 	 * Check if we have resizer. Otherwise don't allow crop size to
 	 * be different from image size
 	 */
-	imp_win.width = vpfe_dev->crop.width;
-	imp_win.height = vpfe_dev->crop.height;
-	imp_win.hst = vpfe_dev->crop.left;
+	imp_input_win.width = vpfe_dev->crop.width;
+	imp_input_win.height = vpfe_dev->crop.height;
+	imp_input_win.hst = vpfe_dev->crop.left;
 	/* vst start from 1 */
-	imp_win.vst = vpfe_dev->crop.top + 1;
-	if (imp_hw_if->set_input_win(&imp_win) < 0) {
+	imp_input_win.vst = vpfe_dev->crop.top + 1;
+	if (imp_hw_if->set_input_win(&imp_input_win) < 0) {
 		v4l2_err(&vpfe_dev->v4l2_dev, "Error in setting crop window"
 			 " in IMP\n");
 		goto imp_exit;
 	}
 
 	/* Set output */
-	imp_win.width = vpfe_dev->fmt.fmt.pix.width;
-	imp_win.height = vpfe_dev->fmt.fmt.pix.height;
-	imp_win.hst = 0;
-	imp_win.vst = 0;
-	if (imp_hw_if->set_output_win(&imp_win) < 0) {
+	imp_output_win.width = vpfe_dev->fmt.fmt.pix.width;
+	imp_output_win.height = vpfe_dev->fmt.fmt.pix.height;
+	imp_output_win.hst = 0;
+	imp_output_win.vst = 0;
+	if (imp_hw_if->set_output_win(&imp_output_win, &imp_input_win, vpfe_dev->fmt.fmt.pix.bytesperline) < 0) {
 		v4l2_err(&vpfe_dev->v4l2_dev, "Error in setting image window"
 			 " in IMP\n");
 		goto imp_exit;
@@ -2328,12 +2343,14 @@ static int vpfe_s_crop(struct file *file, void *priv,
 
 	v4l2_dbg(1, debug, &vpfe_dev->v4l2_dev, "vpfe_s_crop\n");
 
+#ifdef FRANK
 	if (vpfe_dev->started) {
 		/* make sure streaming is not started */
 		v4l2_err(&vpfe_dev->v4l2_dev,
 			"Cannot change crop when streaming is ON\n");
 		return -EBUSY;
 	}
+#endif
 
 	ret = mutex_lock_interruptible(&vpfe_dev->lock);
 	if (ret)
@@ -2346,9 +2363,12 @@ static int vpfe_s_crop(struct file *file, void *priv,
 		goto unlock_out;
 	}
 
-	/* adjust the width to 16 pixel boundry */
-	crop->c.width = ((crop->c.width + 15) & ~0xf);
+	/* adjust the left to an even boundary to avoid swapping chroma samples */
+	crop->c.left = (crop->c.left) & ~0x1;
 
+	/* adjust the width to 2 pixel boundry */
+	crop->c.width = ((crop->c.width + 1) & ~0x1);
+	
 	/**
 	 * When there is no image processor chained, then cropping
 	 * happens at the ccdc and image size is the cropped image
@@ -2360,8 +2380,9 @@ static int vpfe_s_crop(struct file *file, void *priv,
 		max_width = vpfe_dev->std_info.active_pixels;
 		max_height = vpfe_dev->std_info.active_lines;
 	} else {
-		max_width = vpfe_dev->fmt.fmt.pix.width;
-		max_height = vpfe_dev->fmt.fmt.pix.height;
+	  /* Frank - terrible hack here since fmt.fmt.pix.width is confusingly used */
+	  max_width = 1280; //vpfe_dev->fmt.fmt.pix.width;
+	  max_height = 800;//vpfe_dev->fmt.fmt.pix.height;
 	}
 
 	if ((crop->c.left + crop->c.width > max_width) ||
@@ -2383,19 +2404,44 @@ static int vpfe_s_crop(struct file *file, void *priv,
 			vpfe_dev->fmt.fmt.pix.bytesperline *
 			vpfe_dev->fmt.fmt.pix.height;
 	} else {
-		struct imp_window imp_crop_win;
+		struct imp_window imp_input_win;
+		struct imp_window imp_output_win;
 
-		imp_crop_win.width = crop->c.width;
-		imp_crop_win.height = crop->c.height;
-		imp_crop_win.hst = crop->c.left;
+		imp_input_win.width = crop->c.width;
+		imp_input_win.height = crop->c.height;
+		imp_input_win.hst = crop->c.left;
 		/* vst starts from 1 */
-		imp_crop_win.vst = crop->c.top + 1;
-		if (imp_hw_if->set_input_win(&imp_crop_win) < 0) {
+		imp_input_win.vst = crop->c.top + 1;
+		if (imp_hw_if->set_input_win(&imp_input_win) < 0) {
 			v4l2_err(&vpfe_dev->v4l2_dev, "Error in setting crop "
 				 "window in IMP\n");
 			ret = -EINVAL;
 			goto unlock_out;
 		}
+
+		/* Set output */
+		imp_output_win.width = vpfe_dev->fmt.fmt.pix.width;
+		imp_output_win.height = vpfe_dev->fmt.fmt.pix.height;
+		imp_output_win.hst = 0;
+		imp_output_win.vst = 0;
+		if (imp_hw_if->set_output_win(&imp_output_win, &imp_input_win, vpfe_dev->fmt.fmt.pix.bytesperline) < 0) {
+			v4l2_err(&vpfe_dev->v4l2_dev, "Error in setting crop "
+				 "output window in IMP\n");
+			ret = -EINVAL;
+			goto unlock_out;
+		}
+
+		/* FAH: If the stream is running already, then update the hardware
+		 * registers.
+		 */
+		if (vpfe_dev->started) {
+		  if (imp_hw_if->hw_setup(vpfe_dev->pdev, NULL) < 0) {
+		    v4l2_err(&vpfe_dev->v4l2_dev,
+			     "Error setting up IMP\n");
+		    goto unlock_out;
+		  }
+		}
+
 	}
 	vpfe_dev->crop = crop->c;
 unlock_out:
@@ -2478,6 +2524,32 @@ static int vpfe_g_parm(struct file *file, void *priv,
 	return 0;
 }
 
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+static int vpfe_g_register(struct file *file, void *priv,
+			     struct v4l2_dbg_register *reg)
+{
+	struct vpfe_device *vpfe_dev = video_drvdata(file);
+	struct vpfe_subdev_info *sub_dev = vpfe_dev->current_subdev;
+	
+	v4l2_dbg(1, debug, &vpfe_dev->v4l2_dev, "vpfe_g_reg\n");
+	
+	return v4l2_device_call_until_err(&vpfe_dev->v4l2_dev, sub_dev->grp_id,
+					  core, g_register, reg);
+}
+
+static int vpfe_s_register(struct file *file, void *priv,
+			     struct v4l2_dbg_register *reg)
+{
+	struct vpfe_device *vpfe_dev = video_drvdata(file);
+	struct vpfe_subdev_info *sub_dev = vpfe_dev->current_subdev;
+	
+	v4l2_dbg(1, debug, &vpfe_dev->v4l2_dev, "vpfe_s_reg\n");
+	
+	return v4l2_device_call_until_err(&vpfe_dev->v4l2_dev, sub_dev->grp_id,
+					  core, s_register, reg);
+}
+#endif
+
 /* vpfe capture ioctl operations */
 static const struct v4l2_ioctl_ops vpfe_ioctl_ops = {
 	.vidioc_querycap	 = vpfe_querycap,
@@ -2505,6 +2577,10 @@ static const struct v4l2_ioctl_ops vpfe_ioctl_ops = {
 	.vidioc_s_crop		 = vpfe_s_crop,
 	.vidioc_s_parm		 = vpfe_s_parm,
 	.vidioc_g_parm		 = vpfe_g_parm,
+#ifdef CONFIG_VIDEO_ADV_DEBUG
+	.vidioc_g_register       = vpfe_g_register,
+	.vidioc_s_register       = vpfe_s_register,
+#endif
 };
 
 static struct vpfe_device *vpfe_initialize(void)
