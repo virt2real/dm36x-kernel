@@ -1246,9 +1246,10 @@ static int __init davinci_mmcsd_probe(struct platform_device *pdev)
 	if (host->use_dma && davinci_acquire_dma_channels(host) != 0)
 		host->use_dma = 0;
 
+#ifndef CONFIG_MMC_DONT_POLL_FOR_REMOVAL
 	/* REVISIT:  someday, support IRQ-driven card detection.  */
 	mmc->caps |= MMC_CAP_NEEDS_POLL;
-
+#endif
 	if (!pdata || pdata->wires == 4 || pdata->wires == 0)
 		mmc->caps |= MMC_CAP_4_BIT_DATA;
 
