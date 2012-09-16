@@ -262,6 +262,7 @@ enum {
 
 	V4L2_IDENT_OV10633              = 45033,
 	V4L2_IDENT_FLIRTAU2             = 45034,
+	V4L2_IDENT_MT9V034              = 45040,
 
 	/* HV7131R CMOS sensor: just ident 46000 */
 	V4L2_IDENT_HV7131R		= 46000,

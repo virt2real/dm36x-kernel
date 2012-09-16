@@ -73,6 +73,7 @@ static void __init davinci_serial_reset(struct plat_serial8250_port *p)
 int __init davinci_serial_init(struct davinci_uart_config *info)
 {
 	int i;
+	int max_uarts = cpu_is_davinci_dm365() ? DM36X_MAX_NR_UARTS : DAVINCI_MAX_NR_UARTS;
 	char name[16];
 	struct clk *uart_clk;
 	struct davinci_soc_info *soc_info = &davinci_soc_info;
@@ -83,7 +84,8 @@ int __init davinci_serial_init(struct davinci_uart_config *info)
 	 * Make sure the serial ports are muxed on at this point.
 	 * You have to mux them off in device drivers later on if not needed.
 	 */
-	for (i = 0; i < DAVINCI_MAX_NR_UARTS; i++, p++) {
+       
+	for (i = 0; i < max_uarts; i++, p++) {
 		if (!cpu_is_davinci_dm355() &&
 			!cpu_is_davinci_dm365()) {
 			if (!(info->enabled_uarts & (1 << i)))
