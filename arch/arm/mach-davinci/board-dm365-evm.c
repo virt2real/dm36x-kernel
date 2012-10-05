@@ -124,29 +124,11 @@ static struct platform_device leds_gpio = {
   },
 };
 
-  
-/**
- * dm365evm_reset_imager() - reset the image sensor
- * @en: enable/disable flag
- */
-static void dm365evm_reset_imager(int rst)
-{
-	/**
-	 * Configure GPIO40 to be output and high. This has dependency on MMC1
-	 */
-	davinci_cfg_reg(DM365_GPIO40);
-	gpio_request(40, "sensor_reset");
-	if (rst)
-		gpio_direction_output(40, 1);
-	else
-		gpio_direction_output(40, 0);
-}
-
 /* Input available at the camera */
 static struct v4l2_input camera_inputs[] = {
 	{
 		.index = 0,
-		.name = "MyCamera",
+		.name = "Camera",
 		.type = V4L2_INPUT_TYPE_CAMERA,
 		.std = V4L2_STD_720P_30,
 	}
@@ -155,22 +137,20 @@ static struct v4l2_input camera_inputs[] = {
 static struct vpfe_subdev_info vpfe_sub_devs[] = {
 	{
         /* cam board */
-		.module_name = "camera_fillin",
+		.module_name = "mt9p031",
 		.is_camera = 1, /* See vpfe_capture.c's interface setting. 
 				   Be sure to pass vpfe_capture.interface=1
 				   to kernel command line parameters */
-		.is_ycc_camera = 1, /* See vpfe_capture.c for TI's hardcoded assumption that cameras are bayer */
-		.grp_id = VPFE_SUBDEV_OV10633,
+		.grp_id = VPFE_SUBDEV_MT9P031,
 		.num_inputs = ARRAY_SIZE(camera_inputs),
 		.inputs = camera_inputs,
 		.ccdc_if_params = {
-			.if_type = VPFE_YCBCR_SYNC_8,
+			.if_type = VPFE_RAW_BAYER,
 			.hdpol = VPFE_PINPOL_NEGATIVE,
 			.vdpol = VPFE_PINPOL_POSITIVE,
-			.ycbcr8_y_then_c = 1,
 		},
 		.board_info = {
-			I2C_BOARD_INFO("camera", 0x30),
+			I2C_BOARD_INFO("mt9p031", 0x48),
 			/* this is for PCLK rising edge */
 			.platform_data = (void *)1,
 		},
@@ -180,19 +160,10 @@ static struct vpfe_subdev_info vpfe_sub_devs[] = {
 /* Set the input mux for TVP7002/TVP5146/MTxxxx sensors */
 static int dm365evm_setup_video_input(enum vpfe_subdev_id id)
 {
-	const char *label;
+  /* Pull the camera out of reset */
+ gpio_request(31, "sensor_reset");
+ gpio_direction_output(31, 1);
 
-	switch (id) {
-		case VPFE_SUBDEV_OV10633:
-			label = "HD imager";
-
-			dm365evm_reset_imager(1);
-			break;
-		default:
-			return 0;
-	}
-
-	pr_info("EVM: switch to %s video input\n", label);
 	return 0;
 }
 

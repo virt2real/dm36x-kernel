@@ -622,8 +622,8 @@ static const struct v4l2_subdev_core_ops mt9p031_core_ops = {
 	.s_ctrl	= mt9p031_set_control,
     .s_std     =  mt9p031_set_standard,
 #ifdef CONFIG_VIDEO_ADV_DEBUG
-	.get_register = mt9p031_get_register,
-	.set_register = mt9p031_set_register,
+	.g_register = mt9p031_get_register,
+	.s_register = mt9p031_set_register,
 #endif
 };
 
