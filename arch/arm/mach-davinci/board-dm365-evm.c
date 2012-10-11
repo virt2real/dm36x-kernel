@@ -146,7 +146,7 @@ static struct vpfe_subdev_info vpfe_sub_devs[] = {
 		.inputs = camera_inputs,
 		.ccdc_if_params = {
 			.if_type = VPFE_RAW_BAYER,
-			.hdpol = VPFE_PINPOL_NEGATIVE,
+			.hdpol = VPFE_PINPOL_POSITIVE,
 			.vdpol = VPFE_PINPOL_POSITIVE,
 		},
 		.board_info = {
