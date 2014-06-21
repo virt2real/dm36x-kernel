@@ -797,7 +797,15 @@ config USB_CDC_COMPOSITE
 # put drivers that need isochronous transfer support (for audio
 # or video class gadget drivers), or specific hardware, here.
 
-# - none yet
+config USB_G_WEBCAM
+	tristate "USB Webcam Gadget"
+	help
+	  The Webcam Gadget acts as a USB Video Class device. It
+	  provides a userspace API to process UVC control requests and
+	  stream video data to the host.
+
+	  Say "y" to link the driver statically, or "m" to build a
+	  dynamically linked module called "g_webcam".
 
 endchoice
 
