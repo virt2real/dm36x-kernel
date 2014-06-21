@@ -5,6 +5,7 @@
  *    Copyright (C) 1999,2000 IBM Deutschland Entwicklung GmbH, IBM Corporation
  *    Author(s): Martin Schwidefsky (schwidefsky@de.ibm.com),
  *               Denis Joseph Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com),
+ *  Portions added by T. Halloran: (C) Copyright 2002 IBM Poughkeepsie, IBM Corporation
  *
  *  Derived from "arch/i386/kernel/traps.c"
  *    Copyright (C) 1991, 1992 Linus Torvalds
@@ -33,6 +34,7 @@
 #include <linux/kprobes.h>
 #include <linux/bug.h>
 #include <linux/utsname.h>
+#include <trace/trap.h>
 #include <asm/system.h>
 #include <asm/uaccess.h>
 #include <asm/io.h>
@@ -69,6 +71,12 @@ static int kstack_depth_to_print = 12;
 #define FOURLONG "%016lx %016lx %016lx %016lx\n"
 static int kstack_depth_to_print = 20;
 #endif /* CONFIG_64BIT */
+
+/*
+ * Also used in fault.c.
+ */
+DEFINE_TRACE(trap_entry);
+DEFINE_TRACE(trap_exit);
 
 /*
  * For show_trace we have tree different stack to consider:
@@ -349,6 +357,8 @@ static void __kprobes inline do_trap(long interruption_code, int signr,
 				interruption_code, signr) == NOTIFY_STOP)
 		return;
 
+	trace_trap_entry(regs, interruption_code & 0xffff);
+
         if (regs->psw.mask & PSW_MASK_PSTATE) {
                 struct task_struct *tsk = current;
 
@@ -369,6 +379,7 @@ static void __kprobes inline do_trap(long interruption_code, int signr,
 			die(str, regs, interruption_code);
 		}
         }
+	trace_trap_exit();
 }
 
 static inline void __user *get_check_address(struct pt_regs *regs)
@@ -479,6 +490,8 @@ static void illegal_op(struct pt_regs * regs, long interruption_code)
 	if (regs->psw.mask & PSW_MASK_PSTATE)
 		local_irq_enable();
 
+	trace_trap_entry(regs, interruption_code & 0xffff);
+
 	if (regs->psw.mask & PSW_MASK_PSTATE) {
 		if (get_user(*((__u16 *) opcode), (__u16 __user *) location))
 			return;
@@ -543,6 +556,7 @@ static void illegal_op(struct pt_regs * regs, long interruption_code)
 		do_trap(interruption_code, signal,
 			"illegal operation", regs, &info);
 	}
+	trace_trap_exit();
 }
 
 
@@ -562,6 +576,8 @@ specification_exception(struct pt_regs * regs, long interruption_code)
 	 */
         if (regs->psw.mask & PSW_MASK_PSTATE)
 		local_irq_enable();
+
+	trace_trap_entry(regs, interruption_code & 0xffff);
 
         if (regs->psw.mask & PSW_MASK_PSTATE) {
 		get_user(*((__u16 *) opcode), location);
@@ -607,6 +623,7 @@ specification_exception(struct pt_regs * regs, long interruption_code)
 		do_trap(interruption_code, signal, 
 			"specification exception", regs, &info);
 	}
+	trace_trap_exit();
 }
 #else
 DO_ERROR_INFO(SIGILL, "specification exception", specification_exception,
@@ -626,6 +643,8 @@ static void data_exception(struct pt_regs * regs, long interruption_code)
 	 */
 	if (regs->psw.mask & PSW_MASK_PSTATE)
 		local_irq_enable();
+
+	trace_trap_entry(regs, interruption_code & 0xffff);
 
 	if (MACHINE_HAS_IEEE)
 		asm volatile("stfpc %0" : "=m" (current->thread.fp_regs.fpc));
@@ -701,6 +720,7 @@ static void data_exception(struct pt_regs * regs, long interruption_code)
 		do_trap(interruption_code, signal, 
 			"data exception", regs, &info);
 	}
+	trace_trap_exit();
 }
 
 static void space_switch_exception(struct pt_regs * regs, long int_code)

@@ -21,6 +21,7 @@
 #include <linux/hardirq.h>
 #include <linux/init.h>
 #include <linux/uaccess.h>
+#include <trace/trap.h>
 
 #include <asm/atomic.h>
 #include <asm/cacheflush.h>
@@ -31,6 +32,9 @@
 
 #include "ptrace.h"
 #include "signal.h"
+
+DEFINE_TRACE(trap_entry);
+DEFINE_TRACE(trap_exit);
 
 static const char *handler[]= { "prefetch abort", "data abort", "address exception", "interrupt" };
 
@@ -281,7 +285,11 @@ void arm_notify_die(const char *str, struct pt_regs *regs,
 		current->thread.error_code = err;
 		current->thread.trap_no = trap;
 
+		trace_trap_entry(regs, current->thread.trap_no);
+
 		force_sig_info(info->si_signo, info, current);
+
+		trace_trap_exit();
 	} else {
 		die(str, regs, err);
 	}

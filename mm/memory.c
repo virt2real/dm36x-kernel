@@ -56,6 +56,8 @@
 #include <linux/kallsyms.h>
 #include <linux/swapops.h>
 #include <linux/elf.h>
+#include <trace/swap.h>
+#include <trace/fault.h>
 
 #include <asm/io.h>
 #include <asm/pgalloc.h>
@@ -65,6 +67,10 @@
 #include <asm/pgtable.h>
 
 #include "internal.h"
+
+DEFINE_TRACE(swap_in);
+DEFINE_TRACE(page_fault_get_user_entry);
+DEFINE_TRACE(page_fault_get_user_exit);
 
 #ifndef CONFIG_NEED_MULTIPLE_NODES
 /* use the per-pgdat data instead for discontigmem - mbligh */
@@ -1320,11 +1326,15 @@ int __get_user_pages(struct task_struct *tsk, struct mm_struct *mm,
 
 			cond_resched();
 			while (!(page = follow_page(vma, start, foll_flags))) {
-				int ret;
+				int ret, write_access;
 
+				write_access = foll_flags & FOLL_WRITE;
+				trace_page_fault_get_user_entry(mm,
+					vma, start, write_access);
 				ret = handle_mm_fault(mm, vma, start,
-					(foll_flags & FOLL_WRITE) ?
+					write_access ?
 					FAULT_FLAG_WRITE : 0);
+				trace_page_fault_get_user_exit(ret);
 
 				if (ret & VM_FAULT_ERROR) {
 					if (ret & VM_FAULT_OOM)
@@ -2539,6 +2549,7 @@ static int do_swap_page(struct mm_struct *mm, struct vm_area_struct *vma,
 		/* Had to read the page from swap area: Major fault */
 		ret = VM_FAULT_MAJOR;
 		count_vm_event(PGMAJFAULT);
+		trace_swap_in(page, entry);
 	} else if (PageHWPoison(page)) {
 		ret = VM_FAULT_HWPOISON;
 		delayacct_clear_flag(DELAYACCT_PF_SWAPIN);
