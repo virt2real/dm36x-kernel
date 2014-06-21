@@ -88,8 +88,8 @@ static int debug;
 static u32 numbuffers = 3;
 static u32 bufsize = HD_IMAGE_SIZE + SECOND_IMAGE_SIZE_MAX;
 static int interface;
-static u32 cont_bufoffset;
-static u32 cont_bufsize;
+static u32 cont_bufoffset = 0;
+static u32 cont_bufsize = 0;
 
 module_param(interface, bool, S_IRUGO);
 module_param(numbuffers, uint, S_IRUGO);
