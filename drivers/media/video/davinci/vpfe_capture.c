@@ -580,8 +580,10 @@ static int vpfe_set_format_in_sensor(struct vpfe_device *vpfe_dev,
 
 static int vpfe_initialize_device(struct vpfe_device *vpfe_dev)
 {
+	struct vpfe_subdev_info *sdinfo;
 	int ret = 0;
 
+	sdinfo = vpfe_dev->current_subdev;
 	/* set first input of current subdevice as the current input */
 	vpfe_dev->current_input = 0;
 	/*
@@ -591,6 +593,10 @@ static int vpfe_initialize_device(struct vpfe_device *vpfe_dev)
 	 */
 	if (vpfe_dev->current_subdev->is_camera) {
 		vpfe_dev->std_index = -1;
+		/* Set the bus/interface parameter for the sub device in ccdc */
+		ret = ccdc_dev->hw_ops.set_hw_if_params(&sdinfo->ccdc_if_params);
+		if (ret)
+			goto unlock_out;
 		/*
 		 * Configure the vpfe default format information based on ccdc
 		 * defaults
@@ -648,6 +654,7 @@ static int vpfe_initialize_device(struct vpfe_device *vpfe_dev)
 		(imp_hw_if->get_preview_oper_mode() == IMP_MODE_CONTINUOUS)) {
 		if (imp_hw_if->get_previewer_config_state()
 			== STATE_CONFIGURED) {
+			//v4l2_dbg(1, debug, &vpfe_dev->v4l2_dev, "IPIPE Chained\n");
 			v4l2_info(&vpfe_dev->v4l2_dev, "IPIPE Chained\n");
 			vpfe_dev->imp_chained = 1;
 			vpfe_dev->out_from = VPFE_IMP_PREV_OUT;
@@ -1262,7 +1269,7 @@ static const struct vpfe_pixel_format *
 
 	min_width /= vpfe_pix_fmt->bpp;
 
-	v4l2_info(&vpfe_dev->v4l2_dev, "width = %d, height = %d, bpp = %d\n",
+	v4l2_dbg(1, debug, &vpfe_dev->v4l2_dev, "width = %d, height = %d, bpp = %d\n",
 		  pixfmt->width, pixfmt->height, vpfe_pix_fmt->bpp);
 
 	pixfmt->width = clamp((pixfmt->width), min_width, max_width);
@@ -1284,7 +1291,7 @@ static const struct vpfe_pixel_format *
 	else
 		pixfmt->sizeimage = pixfmt->bytesperline * pixfmt->height;
 
-	v4l2_info(&vpfe_dev->v4l2_dev, "adjusted width = %d, height ="
+	v4l2_dbg(1, debug, &vpfe_dev->v4l2_dev, "adjusted width = %d, height ="
 		 " %d, bpp = %d, bytesperline = %d, sizeimage = %d\n",
 		 pixfmt->width, pixfmt->height, vpfe_pix_fmt->bpp,
 		 pixfmt->bytesperline, pixfmt->sizeimage);
@@ -1624,7 +1631,7 @@ static int vpfe_enum_input(struct file *file, void *priv,
 					&subdev,
 					&index,
 					inp->index) < 0) {
-		v4l2_err(&vpfe_dev->v4l2_dev, "input information not found"
+		v4l2_dbg(1, debug, &vpfe_dev->v4l2_dev, "input information not found"
 			 " for the subdev\n");
 		return -EINVAL;
 	}
@@ -1819,7 +1826,7 @@ static int vpfe_g_std(struct file *file, void *priv, v4l2_std_id *std_id)
 
 	if (vpfe_dev->std_index < 0 ||
 	    vpfe_dev->std_index >= ARRAY_SIZE(vpfe_standards)) {
-		v4l2_err(&vpfe_dev->v4l2_dev, "Standard not supported\n");
+		v4l2_dbg(1, debug, &vpfe_dev->v4l2_dev, "Standard not supported\n");
 		return -EINVAL;
 	}
 	*std_id = vpfe_standards[vpfe_dev->std_index].std_id;
@@ -2550,6 +2557,58 @@ static int vpfe_s_register(struct file *file, void *priv,
 }
 #endif
 
+static int vpfe_enum_framesizes(struct file *file, void *priv,
+				struct v4l2_frmsizeenum *frms)
+{
+	struct vpfe_device *vpfe_dev = video_drvdata(file);
+	struct vpfe_subdev_info *sdinfo;
+	u32 pixel_format;
+	int ret = -EINVAL;
+
+	v4l2_dbg(1, debug, &vpfe_dev->v4l2_dev, "vpfe_enum_framesizes\n");
+	sdinfo = vpfe_dev->current_subdev;
+
+	mutex_lock(&vpfe_dev->lock);
+
+	if (sdinfo->is_camera) {
+		/* Assume the sensor supports V4L2_PIX_FMT_SGRBG10*/
+		pixel_format = frms->pixel_format;
+		frms->pixel_format = V4L2_PIX_FMT_SGRBG10;
+		ret = v4l2_device_call_until_err(&vpfe_dev->v4l2_dev,
+			sdinfo->grp_id, video, enum_framesizes, frms);
+		frms->pixel_format = pixel_format;
+	}
+
+	mutex_unlock(&vpfe_dev->lock);
+	return ret;
+}
+
+static int vpfe_enum_frameintervals(struct file *file, void *priv,
+				struct v4l2_frmivalenum *frmi)
+{
+	struct vpfe_device *vpfe_dev = video_drvdata(file);
+	struct vpfe_subdev_info *sdinfo;
+	u32 pixel_format;
+	int ret = -EINVAL;
+
+	v4l2_dbg(1, debug, &vpfe_dev->v4l2_dev, "vpfe_enum_frameintervals\n");
+	sdinfo = vpfe_dev->current_subdev;
+
+	mutex_lock(&vpfe_dev->lock);
+
+	if (sdinfo->is_camera) {
+		/* Assume the sensor supports V4L2_PIX_FMT_SGRBG10*/
+		pixel_format = frmi->pixel_format;
+		frmi->pixel_format = V4L2_PIX_FMT_SGRBG10;
+		ret = v4l2_device_call_until_err(&vpfe_dev->v4l2_dev,
+			sdinfo->grp_id, video, enum_frameintervals, frmi);
+		frmi->pixel_format = pixel_format;
+	}
+
+	mutex_unlock(&vpfe_dev->lock);
+	return ret;
+}
+
 /* vpfe capture ioctl operations */
 static const struct v4l2_ioctl_ops vpfe_ioctl_ops = {
 	.vidioc_querycap	 = vpfe_querycap,
@@ -2577,6 +2636,8 @@ static const struct v4l2_ioctl_ops vpfe_ioctl_ops = {
 	.vidioc_s_crop		 = vpfe_s_crop,
 	.vidioc_s_parm		 = vpfe_s_parm,
 	.vidioc_g_parm		 = vpfe_g_parm,
+	.vidioc_enum_framesizes	 = vpfe_enum_framesizes,
+	.vidioc_enum_frameintervals = vpfe_enum_frameintervals,
 #ifdef CONFIG_VIDEO_ADV_DEBUG
 	.vidioc_g_register       = vpfe_g_register,
 	.vidioc_s_register       = vpfe_s_register,
