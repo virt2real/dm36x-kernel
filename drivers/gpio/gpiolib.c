@@ -566,6 +566,29 @@ done:
 	return status ? : len;
 }
 
+/*
+ * Similar to export_store() but don't check if a driver
+ *	already owns the gpio signal.  Intended for driver writers
+ *	for monitoring and overriding a gpio controlled by a driver
+ *	under development.
+ */
+static ssize_t export_force_store(struct class *class, const char *buf, size_t len)
+{
+	long	gpio;
+	int	status;
+
+	status = strict_strtol(buf, 0, &gpio);
+	if (status < 0)
+		goto done;
+
+	status = gpio_export(gpio, true);
+
+done:
+	if (status)
+		pr_debug("%s: status %d\n", __func__, status);
+	return status ? : len;
+}
+
 static ssize_t unexport_store(struct class *class, const char *buf, size_t len)
 {
 	long	gpio;
@@ -597,6 +620,7 @@ done:
 
 static struct class_attribute gpio_class_attrs[] = {
 	__ATTR(export, 0200, NULL, export_store),
+	__ATTR(export_force, 0200, NULL, export_force_store),
 	__ATTR(unexport, 0200, NULL, unexport_store),
 	__ATTR_NULL,
 };
