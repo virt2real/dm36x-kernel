@@ -451,7 +451,7 @@ struct imp_hw_interface dm365_ipipe_interface = {
 	.alloc_config_block = ipipe_alloc_config_block,
 	.dealloc_config_block = ipipe_dealloc_config_block,
 	.alloc_user_config_block = ipipe_alloc_user_config_block,
-	.dealloc_config_block = ipipe_dealloc_user_config_block,
+	.dealloc_user_config_block = ipipe_dealloc_user_config_block,
 	.set_user_config_defaults = ipipe_set_user_config_defaults,
 	.set_preview_config = ipipe_set_preview_config,
 	.set_resizer_config = ipipe_set_resize_config,
@@ -3734,7 +3734,7 @@ static int ipipe_set_preview_config(struct device *dev,
 {
 	int ret = 0;
 	struct ipipe_params *param = (struct ipipe_params *)config;
-	dev_err(dev, "ipipe_set_preview_config\n");
+	dev_dbg(dev, "ipipe_set_preview_config\n");
 
 	if ((ISNULL(user_config)) || (ISNULL(config))) {
 		dev_err(dev, "Invalid user_config or config ptr\n");
