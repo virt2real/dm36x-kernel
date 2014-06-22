@@ -1,12 +1,9 @@
 /*
- * Driver for MT9P031 CMOS Image Sensor from Micron, for TI Davinci platform
+ * Driver for MT9P031 CMOS Image Sensor from Micron
  *
- * Copyright (C) 2008, Guennadi Liakhovetski,
- * DENX Software Engineering <lg@denx.de>
+ * Copyright (C) 2010, RidgeRun <www.ridgerun.com>
  *
- * Heavily based on MT9T031 driver from Guennadi Liakhovetski
- * made changes to support TI Davinci platform
- * Copyright (C) 2010, Leopard Imaging, Inc.
+ * Author: Miguel Aguilar <miguel.aguilar@ridgerun.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
