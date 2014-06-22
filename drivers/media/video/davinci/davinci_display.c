@@ -51,7 +51,7 @@ static u32 cont2_bufsize = 0;
 static u32 cont3_bufoffset = 0;
 static u32 cont3_bufsize = 0;
 
-#define DAVINCI_DISPLAY_HD_BUF_SIZE (1280*720*2)
+#define DAVINCI_DISPLAY_HD_BUF_SIZE (1920*1080*2)
 #define DAVINCI_DISPLAY_SD_BUF_SIZE (720*576*2)
 
 static u32 video2_bufsize = DAVINCI_DISPLAY_HD_BUF_SIZE;
@@ -1508,6 +1508,7 @@ static int vpbe_s_fmt(struct file *file, void *priv,
 		return -EFAULT;
 	}
 
+#ifdef V4L2_INFO
 		dev_notice(davinci_display_dev,
 				"Before finishing with S_FMT:\n"
 				"layer.pix_fmt.bytesperline = %d,\n"
@@ -1525,6 +1526,8 @@ static int vpbe_s_fmt(struct file *file, void *priv,
 				"= %d\n",
 				pixfmt->width,
 				layer->layer_info.config.line_length);
+
+#endif
 
 		mutex_unlock(&davinci_dm.lock);
 	} else {
