@@ -964,7 +964,17 @@ void cppi_completion(struct musb *musb, u32 rx, u32 tx)
 			bdptr = txchannel->head;
 			i = 0;
 			reqcomplete = 0;
-
+			
+			/*
+			 * If Head is null then this could mean that a abort interrupt
+			 * that needs to be acknowledged.
+			 */
+			if (NULL == bdptr) {
+				DBG(5, "null BD\n");
+				musb_writel(&txstate->tx_complete, 0, 0);
+				continue;
+			}
+			
 			do {
 				safe2ack = txstate->tx_complete;
 				do {
@@ -1162,6 +1172,7 @@ static int cppi_channel_abort(struct dma_channel *channel)
 	void __iomem 		*mbase;
 	void __iomem 		*tibase;
 	u32 			regval;
+	struct cppi_descriptor	*queue;
 
 	switch (channel->status) {
 	case MUSB_DMA_STATUS_BUS_ABORT:
@@ -1186,6 +1197,10 @@ static int cppi_channel_abort(struct dma_channel *channel)
 
 	mbase = controller->mregs;
 	tibase = mbase - DAVINCI_BASE_OFFSET;
+	
+	queue = cppi_ch->head;
+	cppi_ch->head = NULL;
+	cppi_ch->tail = NULL;
 
 	/* REVISIT should rely on caller having done this,
 	 * and caller should rely on us not changing it.
@@ -1195,14 +1210,6 @@ static int cppi_channel_abort(struct dma_channel *channel)
 
 	if (cppi_ch->transmit) {
 		struct cppi_tx_stateram __iomem *txstate;
-		int 				enabled;
-
-		/* mask interrupts raised to signal teardown complete.  */
-		enabled = musb_readl(tibase, DAVINCI_TXCPPI_INTENAB_REG)
-				& (1 << cppi_ch->index);
-		if (enabled)
-			musb_writel(tibase, DAVINCI_TXCPPI_INTCLR_REG,
-					(1 << cppi_ch->index));
 
 		/* REVISIT put timeouts on these controller handshakes */
 
@@ -1216,11 +1223,9 @@ static int cppi_channel_abort(struct dma_channel *channel)
 
 		txstate = cppi_ch->state_ram;
 		do {
-			regval = txstate->tx_complete;
+			regval = musb_readl(&txstate->tx_complete, 0);
 		} while (0xFFFFFFFC != regval);
 		txstate->tx_complete = 0xFFFFFFFC;
-
-		musb_writel(tibase, DAVINCI_CPPI_EOI_REG, 0);
 
 		/* FIXME clean up the transfer state ... here?
 		 * the completion routine should get called with
@@ -1228,38 +1233,20 @@ static int cppi_channel_abort(struct dma_channel *channel)
 		 */
 
 		regval = musb_readw(cppi_ch->hw_ep->regs, MUSB_TXCSR);
+		regval &= ~MUSB_TXCSR_DMAENAB;
 		regval |= MUSB_TXCSR_FLUSHFIFO;
 		musb_writew(cppi_ch->hw_ep->regs, MUSB_TXCSR, regval);
 		musb_writew(cppi_ch->hw_ep->regs, MUSB_TXCSR, regval);
 
-		txstate->tx_head = 0;
-		txstate->tx_buf = 0;
-		txstate->tx_buf_current = 0;
-		txstate->tx_current = 0;
-		txstate->tx_info = 0;
-		txstate->tx_rem_len = 0;
-
-		/* Ensure that we clean up any Interrupt asserted
+		/*
 		 * 1. Write to completion Ptr value 0x1(bit 0 set)
 		 *    (write back mode)
-		 * 2. Write to completion Ptr value 0x0(bit 0 cleared)
-		 *    (compare mode)
-		 * Value written is compared(for bits 31:2) and being
-		 * equal interrupt deasserted?
+		 * 2. Wait for abort interrupt and then put the channel in
+		 *    compare mode by writing 1 to the tx_complete register.
 		 */
-
-		/* write back mode, bit 0 set, hence completion Ptr
-		 * must be updated
-		 */
-		txstate->tx_complete = 0x1;
-		/* compare mode, write back zero now */
-		txstate->tx_complete = 0;
-
-		/* re-enable interrupt */
-		if (enabled)
-			musb_writel(tibase, DAVINCI_TXCPPI_INTENAB_REG,
-					(1 << cppi_ch->index));
-
+		cppi_reset_tx(txstate, 1);
+		cppi_ch->head = NULL;
+		musb_writel(&txstate->tx_complete, 0, 1);
 		cppi_dump_tx(5, cppi_ch, " (done teardown)");
 
 		/* REVISIT tx side _should_ clean up the same way
@@ -1327,6 +1314,17 @@ static int cppi_channel_abort(struct dma_channel *channel)
 
 		/* ... we don't "free" that list, only mutate it in place.  */
 		cppi_dump_rx(5, cppi_ch, " (done abort)");
+		
+		/* clean up previously pending bds */
+		cppi_bd_free(cppi_ch, cppi_ch->last_processed);
+		cppi_ch->last_processed = NULL;
+
+		while (queue) {
+			struct cppi_descriptor *tmp = queue->next;
+
+			cppi_bd_free(cppi_ch, queue);
+			queue = tmp;
+		}
 	}
 
 	channel->status = MUSB_DMA_STATUS_FREE;
