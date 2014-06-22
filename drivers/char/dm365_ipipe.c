@@ -70,7 +70,6 @@ struct ipipe_oper_state {
 
 /* Operation mode of image processor (imp) */
 static u32 oper_mode = IMP_MODE_SINGLE_SHOT;
-module_param(oper_mode, uint, S_IRUGO);
 /* enable/disable serializer */
 static u32 en_serializer;
 module_param(en_serializer, uint, S_IRUGO);
@@ -343,6 +342,7 @@ static struct prev_module_if prev_modules[PREV_MAX_MODULES] = {
 static struct prev_module_if *prev_enum_preview_cap(struct device *dev,
 						    int index);
 static unsigned int prev_get_oper_mode(void);
+static void  prev_set_oper_mode(unsigned int);
 static unsigned int ipipe_get_oper_state(void);
 static void ipipe_set_oper_state(unsigned int state);
 static unsigned int ipipe_rsz_chain_state(void);
@@ -443,6 +443,8 @@ struct imp_hw_interface dm365_ipipe_interface = {
 	.prev_enum_modules = prev_enum_preview_cap,
 	.get_preview_oper_mode = prev_get_oper_mode,
 	.get_resize_oper_mode = prev_get_oper_mode,
+	.set_resize_oper_mode = prev_set_oper_mode,
+	.set_preview_oper_mode = prev_set_oper_mode,
 	.get_hw_state = ipipe_get_oper_state,
 	.set_hw_state = ipipe_set_oper_state,
 	.resizer_chain = ipipe_rsz_chain_state,
@@ -2280,6 +2282,13 @@ static struct prev_module_if *prev_enum_preview_cap(struct device *dev,
 	return &prev_modules[index];
 }
 
+static void prev_set_oper_mode (unsigned int mode)
+{
+    if ((oper_state.rsz_config_state == STATE_NOT_CONFIGURED) &&
+       (oper_state.prev_config_state == STATE_NOT_CONFIGURED)){
+        oper_mode = mode;
+    }
+}
 static unsigned int prev_get_oper_mode(void)
 {
 	return oper_mode;

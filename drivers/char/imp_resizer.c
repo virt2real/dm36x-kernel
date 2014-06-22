@@ -241,6 +241,9 @@ static int rsz_doioctl(struct inode *inode, struct file *file,
 				goto ERROR;
 			}
 
+			imp_hw_if->set_resize_oper_mode(user_mode);
+			mode = imp_hw_if->get_resize_oper_mode();
+
 			if (user_mode != mode) {
 				dev_err(rsz_device,
 					"Operation mode doesn't match"
@@ -248,7 +251,6 @@ static int rsz_doioctl(struct inode *inode, struct file *file,
 				ret = -EINVAL;
 				goto ERROR;
 			}
-
 			ret = mutex_lock_interruptible(&(rsz_conf_chan->lock));
 			if (!ret) {
 				rsz_conf_chan->mode = mode;

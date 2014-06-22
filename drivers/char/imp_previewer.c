@@ -219,6 +219,9 @@ int previewer_doioctl(struct inode *inode, struct file *file,
 				goto ERROR;
 			}
 
+			imp_hw_if->set_preview_oper_mode(user_mode);
+			mode = imp_hw_if->get_preview_oper_mode();
+
 			if (user_mode != mode) {
 				dev_err(prev_dev,
 					"Operation mode doesn't match"

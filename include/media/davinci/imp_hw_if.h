@@ -56,6 +56,8 @@ struct imp_hw_interface {
 	unsigned int (*get_preview_oper_mode) (void);
 	/* get resize operation mode */
 	unsigned int (*get_resize_oper_mode) (void);
+	void (*set_resize_oper_mode) (unsigned int mode);
+	void (*set_preview_oper_mode) (unsigned int mode);
 	/* check if hw is busy in continuous mode.
 	 * Used for checking if hw is used by ccdc driver in
 	 * continuous mode. If streaming is ON, this will be
