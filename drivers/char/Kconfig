@@ -1195,6 +1195,12 @@ config CIR
         help
                 DaVinci CIR Driver.
 
+config DM365_ADC
+	depends on ARCH_DAVINCI && ARCH_DAVINCI_DM365
+	tristate "DM365 ADC"
+	help
+	   DM365 internal ADC driver. Allows to sstart and read conversions
+	   of all the channels through the read function.
 
 source "drivers/s390/char/Kconfig"
 

@@ -98,6 +98,7 @@
 #define DM365_LPSC_DAC_CLK	46
 #define DM365_LPSC_VPSSMSTR	47
 #define DM365_LPSC_MJCP		50
+#define DM365_LPSC_ADC		51
 
 /*
  * LPSC Assignments

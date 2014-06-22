@@ -374,6 +374,12 @@ static struct clk timer3_clk = {
 	.lpsc		= DM365_LPSC_TIMER3,
 };
 
+static struct clk adc_clk = {
+	.name		= "adc",
+	.parent		= &pll1_aux_clk,
+	.lpsc		= DM365_LPSC_ADC,
+};
+
 static struct clk usb_clk = {
 	.name		= "usb",
 	.parent		= &pll1_aux_clk,
@@ -460,6 +466,7 @@ static struct davinci_clk dm365_clks[] = {
 	CLK(NULL, "timer1", &timer1_clk),
 	CLK("watchdog", NULL, &timer2_clk),
 	CLK(NULL, "timer3", &timer3_clk),
+	CLK(NULL, "adc", &adc_clk),
 	CLK(NULL, "usb", &usb_clk),
 	CLK("davinci_emac.1", NULL, &emac_clk),
 	CLK("davinci_voicecodec", NULL, &voicecodec_clk),
