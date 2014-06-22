@@ -628,7 +628,7 @@ static int ipipe_do_hw_setup(struct device *dev, void *config)
 static void ipipe_get_irq(struct irq_numbers *irq)
 {
 	irq->sdram = IRQ_PRVUINT;
-	irq->update = -1;
+	irq->update = 4;
 }
 
 static unsigned int ipipe_rsz_chain_state(void)
