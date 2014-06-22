@@ -43,7 +43,7 @@
 #include <linux/videodev2.h>
 #include <media/davinci/videohd.h>
 
-#define BITBANG_I2C
+//#define BITBANG_I2C
 
 #ifdef BITBANG_I2C
 #include <linux/i2c-gpio.h>
@@ -70,9 +70,9 @@ static struct snd_platform_data dm365_evm_snd_data = {
 };
 
 static struct i2c_board_info i2c_info[] = {
-	{
-		I2C_BOARD_INFO("ths7303", 0x2c),
-	},
+//	{
+//		I2C_BOARD_INFO("ths7303", 0x2c),
+//	},
 };
 
 #ifdef BITBANG_I2C
@@ -90,6 +90,8 @@ static struct platform_device bitbanged_i2c_device = {
 static struct davinci_i2c_platform_data i2c_pdata = {
 	.bus_freq	= 400	/* kHz */,
 	.bus_delay	= 0	/* usec */,
+	.sda_pin = 21,
+	.scl_pin = 20,
 };
 #endif
 
@@ -100,14 +102,14 @@ static int cpld_mmc_get_ro(int module)
 
 static struct gpio_led gpio_leds[] = {
   {
-    .name = "leopardboard::debug0",
+    .name = "v2r:red:user",
     .default_trigger = "heartbeat",
-    .gpio = 57,
+    .gpio = 74,
   },
   {
-    .name = "leopardboard::debug1",
-    .default_trigger = "mmc0",
-    .gpio = 58,
+    .name = "v2r:green:user",
+    .default_trigger = "none",
+    .gpio = 73,
   },
 };
 
@@ -130,18 +132,18 @@ static struct v4l2_input camera_inputs[] = {
 		.index = 0,
 		.name = "Camera",
 		.type = V4L2_INPUT_TYPE_CAMERA,
-		.std = V4L2_STD_720P_30,
+//		.std = V4L2_STD_720P_30,
 	}
 };
 
 static struct vpfe_subdev_info vpfe_sub_devs[] = {
 	{
         /* cam board */
-		.module_name = "mt9p031",
+		.module_name = "ov2643",
 		.is_camera = 1, /* See vpfe_capture.c's interface setting. 
 				   Be sure to pass vpfe_capture.interface=1
 				   to kernel command line parameters */
-		.grp_id = VPFE_SUBDEV_MT9P031,
+		.grp_id = VPFE_SUBDEV_OV2643,
 		.num_inputs = ARRAY_SIZE(camera_inputs),
 		.inputs = camera_inputs,
 		.ccdc_if_params = {
@@ -150,19 +152,41 @@ static struct vpfe_subdev_info vpfe_sub_devs[] = {
 			.vdpol = VPFE_PINPOL_POSITIVE,
 		},
 		.board_info = {
-			I2C_BOARD_INFO("mt9p031", 0x48),
+			I2C_BOARD_INFO("ov2643", 0x30),
 			/* this is for PCLK rising edge */
 			.platform_data = (void *)1,
 		},
 	},
 };
 
+static inline int have_imager(void)
+{
+#if defined(CONFIG_SOC_CAMERA_OV2643) || \
+	defined(CONFIG_SOC_CAMERA_OV2643_MODULE)
+	return 1;
+#else
+	return 0;
+#endif
+}
+
+static void dm365_camera_configure(void){
+	davinci_cfg_reg(DM365_CAM_OFF);
+	gpio_request(98, "CAMERA_OFF");
+	gpio_direction_output(98, 0);
+	davinci_cfg_reg(DM365_CAM_RESET);
+	gpio_request(99, "CAMERA_RESET");
+	gpio_direction_output(99, 1);
+	davinci_cfg_reg(DM365_GPIO37);//Disable clk at gpio37
+	davinci_cfg_reg(DM365_EXTCLK);
+}
+
 /* Set the input mux for TVP7002/TVP5146/MTxxxx sensors */
 static int dm365evm_setup_video_input(enum vpfe_subdev_id id)
 {
-  /* Pull the camera out of reset */
- gpio_request(31, "sensor_reset");
- gpio_direction_output(31, 1);
+	printk("dm365evm_setup_video_input\n");
+	/* Pull the camera out of reset */
+	gpio_request(31, "sensor_reset");
+	gpio_direction_output(31, 1);
 
 	return 0;
 }
@@ -177,13 +201,55 @@ static struct vpfe_config vpfe_cfg = {
        .clocks = {"vpss_master"},
 };
 
+//SD card configuration functions
+//May be used dynamically
+static int mmc_get_cd(int module)
+{
+	//1 = card present
+	//0 = card not present
+	return 1;
+}
+
+static int mmc_get_ro(int module)
+{
+	//1 = device is read-only
+	//0 = device is mot read only
+	return 0;
+}
+
 static struct davinci_mmc_config dm365evm_mmc_config = {
-	.get_ro		= cpld_mmc_get_ro,
+	.get_cd		= mmc_get_cd,
+	.get_ro		= mmc_get_ro,
+//	.get_ro		= cpld_mmc_get_ro,
 	.wires		= 4,
 	.max_freq	= 50000000,
 	.caps		= MMC_CAP_MMC_HIGHSPEED | MMC_CAP_SD_HIGHSPEED,
 	.version	= MMC_CTLR_VERSION_2,
 };
+
+static struct davinci_mmc_config dm365evm_mmc1_config = {
+	//.get_cd		= mmc_get_cd,
+	//.get_ro		= mmc_get_ro,
+	.wires		= 4,
+	.max_freq	= 50000000,
+	.caps		= MMC_CAP_MMC_HIGHSPEED | MMC_CAP_SD_HIGHSPEED,
+};
+
+static void dm365evm_mmc_configure(void)
+{
+	/*
+	 * MMC/SD pins are multiplexed with GPIO and EMIF
+	 * Further details are available at the DM365 ARM
+	 * Subsystem Users Guide(sprufg5.pdf) pages 118, 128 - 131
+	 */
+	davinci_cfg_reg(DM365_SD1_CLK);
+	davinci_cfg_reg(DM365_SD1_CMD);
+	davinci_cfg_reg(DM365_SD1_DATA3);
+	davinci_cfg_reg(DM365_SD1_DATA2);
+	davinci_cfg_reg(DM365_SD1_DATA1);
+	davinci_cfg_reg(DM365_SD1_DATA0);
+}
+
 
 static void dm365evm_emac_configure(void)
 {
@@ -267,12 +333,24 @@ static __init void dm365_evm_init(void)
 	evm_init_i2c();
 	davinci_serial_init(&uart_config);
 
+	dm365evm_mmc_configure();
+
+	dm365_camera_configure();
+
+	// try to init Real Time Clock
+	dm365_init_rtc();
+
 	dm365evm_emac_configure();
 	dm365evm_usb_configure();
 
+	// try to init MMC0 (microSD)
 	davinci_setup_mmc(0, &dm365evm_mmc_config);
+	//davinci_setup_mmc(1, &dm365evm_mmc1_config);
 
-	dm365_init_asp(&dm365_evm_snd_data);
+	// try to init VoiceCodec
+	dm365_init_vc(&dm365_evm_snd_data);
+
+	//dm365_init_asp(&dm365_evm_snd_data);
 
 	(void) platform_device_register(&leds_gpio);
 }
@@ -291,4 +369,3 @@ MACHINE_START(DAVINCI_DM365_EVM, "DaVinci DM36x EVM")
 	.timer		= &davinci_timer,
 	.init_machine	= dm365_evm_init,
 MACHINE_END
-

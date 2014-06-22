@@ -622,6 +622,12 @@ MUX_CFG(DM365,	VIN_CAM_HD,	0,   12,    1,	  0,	 false)
 MUX_CFG(DM365,	VIN_YIN4_7_EN,	0,   0,     0xff, 0,	 false)
 MUX_CFG(DM365,	VIN_YIN0_3_EN,	0,   8,     0xf,  0,	 false)
 
+MUX_CFG(DM365,	VIN_CAM_VD,	0,   13,    1,	  0,	 false)
+MUX_CFG(DM365,	VIN_CAM_HD,	0,   12,    1,	  0,	 false)
+MUX_CFG(DM365,  EXTCLK,         0,   14,    0x03, 2,     false)//GPIO93 - CAMERA CLK
+MUX_CFG(DM365,	CAM_OFF,	0,   9,    1,	  1,	 false)
+MUX_CFG(DM365,	CAM_RESET,	0,   8,    1,	  1,	 false)
+
 INT_CFG(DM365,  INT_EDMA_CC,         2,     1,    1,     false)
 INT_CFG(DM365,  INT_EDMA_TC0_ERR,    3,     1,    1,     false)
 INT_CFG(DM365,  INT_EDMA_TC1_ERR,    4,     1,    1,     false)
@@ -947,7 +953,7 @@ static struct edma_soc_info dm365_edma_info[] = {
 		.n_cc			= 1,
 		.queue_tc_mapping	= dm365_queue_tc_mapping,
 		.queue_priority_mapping	= dm365_queue_priority_mapping,
-		.default_queue		= EVENTQ_2,
+		.default_queue		= EVENTQ_3, // changed by Gol, was 2
 	},
 };
 

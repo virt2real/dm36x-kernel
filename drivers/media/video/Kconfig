@@ -321,6 +321,7 @@ config VIDEO_OV7670
 	  OV7670 VGA camera.  It currently only works with the M88ALP01
 	  controller.
 
+
 config VIDEO_MT9V011
 	tristate "Micron mt9v011 sensor support"
 	depends on I2C && VIDEO_V4L2
@@ -1033,6 +1034,14 @@ config SOC_CAMERA_OV772X
 	depends on SOC_CAMERA && I2C
 	help
 	  This is a ov772x camera driver
+
+config SOC_CAMERA_OV2643V2R
+	tristate "OmniVision OV2643 sensor support V2R version"
+	depends on SOC_CAMERA && I2C
+	---help---
+	  This is a Video4Linux2 sensor-level driver for the OmniVision
+	  OV2643 VGA camera.
+
 
 config MX1_VIDEO
 	bool
