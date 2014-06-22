@@ -80,7 +80,7 @@
 
 #include "ccdc_hw_device.h"
 
-#define HD_IMAGE_SIZE		(1920 * 1080 * 2)
+#define HD_IMAGE_SIZE		(2176 * 2176 * 2)
 #define PAL_IMAGE_SIZE		(720 * 576 * 2)
 #define SECOND_IMAGE_SIZE_MAX	(640 * 480 * 2)
 
@@ -143,7 +143,8 @@ static struct vpfe_config_params config_params = {
 	.min_numbuffers = 3,
 	.numbuffers = 3,
 	.min_bufsize = 1280 * 720 * 2,
-	.device_bufsize = 1920 * 1080 * 2,
+	/* DM365 IPIPE supports up to 2176 pixels, otherwise you need to use raw */
+	.device_bufsize = 2176 * 2176 * 2,
 };
 
 /* ccdc device registered */
@@ -1894,8 +1895,10 @@ static int vpfe_videobuf_setup(struct videobuf_queue *vq,
 
 	if (vpfe_dev->memory == V4L2_MEMORY_MMAP) {
 		/* Limit maximum to what is configured */
-		if (*size > config_params.device_bufsize)
+		if (*size > config_params.device_bufsize){
 			*size = config_params.device_bufsize;
+			printk("Limiting v4l2 output buffer size %d\n",*size);
+		}
 	}
 
 	if (config_params.video_limit) {

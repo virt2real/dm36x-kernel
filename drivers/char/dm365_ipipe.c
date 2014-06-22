@@ -383,7 +383,8 @@ static int ipipe_set_ipipe_if_address(void *config, unsigned int address);
 #define IPIPE_MAX_OUTPUT_WIDTH_B	640
 
 /* Based on max resolution supported. QXGA */
-#define IPIPE_MAX_OUTPUT_HEIGHT_A	1536
+//#define IPIPE_MAX_OUTPUT_HEIGHT_A	1536
+#define IPIPE_MAX_OUTPUT_HEIGHT_A	2197
 /* Based on max resolution supported. VGA */
 #define IPIPE_MAX_OUTPUT_HEIGHT_B	480
 
