@@ -37,10 +37,10 @@
 #include <video/davinci_osd.h>
 #include <media/davinci/davinci_enc_mngr.h>
 #include <media/davinci/davinci_platform.h>
+
+#ifdef  CONFIG_VIDEO_THS7303
 #include "../ths7303.h"
 
-#define MSP430_I2C_ADDR		(0x25)
-#define PCA9543A_I2C_ADDR	(0x73)
 #define THS7303			0
 #define THS7303_I2C_ADDR	(0x2C)
 #define THS7353_I2C_ADDR	(0x2E)
@@ -48,6 +48,10 @@
 #define THS73XX_CHANNEL_1	1
 #define THS73XX_CHANNEL_2	2
 #define THS73XX_CHANNEL_3	3
+#endif
+
+#define MSP430_I2C_ADDR		(0x25)
+#define PCA9543A_I2C_ADDR	(0x73)
 #define DM365_CPLD_REGISTER3	(0x04000018)
 #define DM365_TVP7002_SEL	(0x1)
 #define DM365_SENSOR_SEL	(0x2)
@@ -69,6 +73,7 @@ struct davinci_venc_state {
 static struct davinci_venc_state venc_state;
 static struct davinci_venc_state *venc = &venc_state;
 
+#ifdef  CONFIG_VIDEO_THS7303
 enum ths73xx_filter_mode {
 	THS_FILTER_MODE_480I,
 	THS_FILTER_MODE_576I,
@@ -78,6 +83,7 @@ enum ths73xx_filter_mode {
 	THS_FILTER_MODE_1080I,
 	THS_FILTER_MODE_1080P
 };
+#endif
 
 extern struct vid_enc_device_mgr enc_dev[];
 
@@ -724,7 +730,9 @@ static void davinci_enc_set_525p(struct vid_enc_mode_info *mode_info)
 
 	if (cpu_is_davinci_dm365()) {
 		dispc_reg_out(VENC_CLKCTL, 0x01);
+#ifdef  CONFIG_VIDEO_THS7303
 		ths7303_setval(THS7303_FILTER_MODE_480P_576P);
+#endif
 		msleep(40);
 		__raw_writel(0x081141EF, IO_ADDRESS(DM3XX_VDAC_CONFIG));
 	}
@@ -767,7 +775,9 @@ static void davinci_enc_set_625p(struct vid_enc_mode_info *mode_info)
 
 	if (cpu_is_davinci_dm365()) {
 		dispc_reg_out(VENC_CLKCTL, 0x01);
+#ifdef  CONFIG_VIDEO_THS7303
 		ths7303_setval(THS7303_FILTER_MODE_480P_576P);
+#endif
 		msleep(40);
 		__raw_writel(0x081141EF, IO_ADDRESS(DM3XX_VDAC_CONFIG));
 	}
@@ -1124,7 +1134,9 @@ static void davinci_enc_set_internal_hd(struct vid_enc_mode_info *mode_info)
 	if (davinci_enc_select_venc_clock(VENC_74_25MHZ) < 0)
 		dev_err(venc->vdev, "PLL's doesnot yield required VENC clk\n");
 
+#ifdef  CONFIG_VIDEO_THS7303
 	ths7303_setval(THS7303_FILTER_MODE_720P_1080I);
+#endif
 	msleep(50);
 	__raw_writel(0x081141EF, IO_ADDRESS(DM3XX_VDAC_CONFIG));
 	return;
