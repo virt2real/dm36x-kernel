@@ -203,6 +203,7 @@ enum davinci_dm365_index {
 	DM365_AEMIF_A7,
 	DM365_AEMIF_D15_8,
 	DM365_AEMIF_CE0,
+	DM365_AEMIF_CE1,
 
 	/* ASP0 function */
 	DM365_MCBSP0_BDX,
@@ -290,6 +291,12 @@ enum davinci_dm365_index {
 	DM365_SPI4_SDI,
 	DM365_SPI4_SDENA0,
 	DM365_SPI4_SDENA1,
+
+	/* Clock */
+	DM365_CLKOUT0,
+	DM365_CLKOUT1,
+	DM365_CLKOUT2,
+
 
 	/* GPIO */
 	DM365_GPIO0,

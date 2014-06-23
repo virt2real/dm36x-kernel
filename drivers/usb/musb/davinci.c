@@ -219,7 +219,7 @@ static void davinci_source_power(struct musb *musb, int is_on, int immediate)
 		vbus_state = is_on;
 #endif
 	if (cpu_is_davinci_dm365())
-		gpio_set_value(33, is_on);
+		gpio_set_value(66, is_on);
 }
 
 static void davinci_set_vbus(struct musb *musb, int is_on)

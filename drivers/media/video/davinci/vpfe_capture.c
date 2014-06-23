@@ -442,6 +442,8 @@ static int vpfe_config_ccdc_image_format(struct vpfe_device *vpfe_dev)
 			pix_fmt = V4L2_PIX_FMT_UYVY;
 	}
 
+pix_fmt = V4L2_PIX_FMT_SBGGR16; // added by Gol
+
 	if (ccdc_dev->hw_ops.set_pixel_format(pix_fmt) < 0) {
 		v4l2_err(&vpfe_dev->v4l2_dev,
 			"couldn't set pix format in ccdc\n");

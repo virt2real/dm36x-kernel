@@ -501,18 +501,9 @@ MUX_CFG(DM365,	SD1_DATA0,	4,   22,    3,	  1,	 false)
 MUX_CFG(DM365,	I2C_SDA,	3,   23,    3,	  2,	 false)
 MUX_CFG(DM365,	I2C_SCL,	3,   21,    3,	  2,	 false)
 
-MUX_CFG(DM365,	AEMIF_AR,	2,   0,     3,	  1,	 false)
-MUX_CFG(DM365,	AEMIF_A3,	2,   2,     3,	  1,	 false)
-MUX_CFG(DM365,	AEMIF_A7,	2,   4,     3,	  1,	 false)
-MUX_CFG(DM365,	AEMIF_D15_8,	2,   6,     1,	  1,	 false)
 MUX_CFG(DM365,	AEMIF_CE0,	2,   7,     1,	  0,	 false)
+MUX_CFG(DM365,	AEMIF_CE1,	2,   8,     1,	  0,	 false)
 
-MUX_CFG(DM365,	MCBSP0_BDX,	0,   23,    1,	  1,	 false)
-MUX_CFG(DM365,	MCBSP0_X,	0,   22,    1,	  1,	 false)
-MUX_CFG(DM365,	MCBSP0_BFSX,	0,   21,    1,	  1,	 false)
-MUX_CFG(DM365,	MCBSP0_BDR,	0,   20,    1,	  1,	 false)
-MUX_CFG(DM365,	MCBSP0_R,	0,   19,    1,	  1,	 false)
-MUX_CFG(DM365,	MCBSP0_BFSR,	0,   18,    1,	  1,	 false)
 
 MUX_CFG(DM365,	SPI0_SCLK,	3,   28,    1,    1,	 false)
 MUX_CFG(DM365,	SPI0_SDI,	3,   26,    3,    1,	 false)
@@ -545,8 +536,6 @@ MUX_CFG(DM365,  EMAC_CRS,	3,   2,     1,    1,     false)
 MUX_CFG(DM365,  EMAC_MDIO,	3,   1,     1,    1,     false)
 MUX_CFG(DM365,  EMAC_MDCLK,	3,   0,     1,    1,     false)
 
-MUX_CFG(DM365,	KEYSCAN,	2,   0,     0x3f, 0x3f,  false)
-
 MUX_CFG(DM365,	PWM0,		1,   0,     3,    2,     false)
 MUX_CFG(DM365,	PWM0_G23,	3,   26,    3,    3,     false)
 MUX_CFG(DM365,	PWM1,		1,   2,     3,    2,     false)
@@ -566,11 +555,6 @@ MUX_CFG(DM365,	SPI1_SDO,	4,   0,     3,    1,	 false)
 MUX_CFG(DM365,	SPI1_SDENA0,	4,   4,     3,    1,	 false)
 MUX_CFG(DM365,	SPI1_SDENA1,	4,   0,     3,    2,	 false)
 
-MUX_CFG(DM365,  GPIO26,         3,   31,    1,    0,     false)
-MUX_CFG(DM365,  GPIO27,         4,   0,     3,    0,     false)
-MUX_CFG(DM365,  GPIO28,         4,   2,     3,    0,     false)
-MUX_CFG(DM365,  GPIO29,         4,   4,     3,    0,     false)
- 
 MUX_CFG(DM365,	SPI2_SCLK,	4,   10,    3,    1,	 false)
 MUX_CFG(DM365,	SPI2_SDI,	4,   6,     3,    1,	 false)
 MUX_CFG(DM365,	SPI2_SDO,	4,   8,     3,    1,	 false)
@@ -583,44 +567,135 @@ MUX_CFG(DM365,	SPI3_SDO,	0,   6,     3,    2,	 false)
 MUX_CFG(DM365,	SPI3_SDENA0,	0,   4,     3,    2,	 false)
 MUX_CFG(DM365,	SPI3_SDENA1,	0,   6,     3,    3,	 false)
 
-MUX_CFG(DM365,	GPIO103,	0,   0,	    3,    1,	 false)
-MUX_CFG(DM365,	GPIO102,	0,   2,     3,    1,	 false)
-MUX_CFG(DM365,	GPIO101,	0,   4,     3,    1,	 false)
-MUX_CFG(DM365,	GPIO100,	0,   6,     3,    1,	 false)
-
 MUX_CFG(DM365,	SPI4_SCLK,	4,   18,    3,    1,	 false)
 MUX_CFG(DM365,	SPI4_SDI,	4,   14,    3,    1,	 false)
 MUX_CFG(DM365,	SPI4_SDO,	4,   16,    3,    1,	 false)
-MUX_CFG(DM365,	SPI4_SDENA0,	4,   20,    3,    1,	 false)
+MUX_CFG(DM365,	SPI4_SDENA0,	4,   20,    3,    0,	 false)
 MUX_CFG(DM365,	SPI4_SDENA1,	4,   16,    3,    2,	 false)
 
+MUX_CFG(DM365,	CLKOUT0,	4,   20,    3,    3,     false)
+MUX_CFG(DM365,	GPIO37,		4,   20,    0,    0,	 false)
+MUX_CFG(DM365,	CLKOUT1,	4,   16,    3,    3,     false)
+MUX_CFG(DM365,	CLKOUT2,	4,   8,     3,    3,     false)
+
+// added by Gol
+MUX_CFG(DM365,	GPIO1,		3,   0,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO2,		3,   1,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO3,		3,   2,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO4,		3,   3,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO5,		3,   4,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO6,		3,   5,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO7,		3,   6,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO8,		3,   7,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO9,		3,   8,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO10,		3,   9,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO11,		3,   10,     1	,    0,	 false)
+MUX_CFG(DM365,	GPIO12,		3,   11,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO13,		3,   12,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO14,		3,   13,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO15,		3,   14,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO16,		3,   15,     3,    0,	 false)
+MUX_CFG(DM365,	GPIO17,		3,   17,     3,    0,	 false)
+MUX_CFG(DM365,	GPIO18,		3,   19,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO19,		3,   20,     1,    0,	 false)
+
+MUX_CFG(DM365,	GPIO21,		3,   23,     0,    0,	 false)
+
+MUX_CFG(DM365,	GPIO36,		4,   18,     3,    0,	 false)
+MUX_CFG(DM365,	GPIO37,		4,   20,     3,    0,	 false)
+MUX_CFG(DM365,	GPIO38,		4,   22,     3,    0,	 false)
+MUX_CFG(DM365,	GPIO39,		4,   24,     3,    0,	 false)
+MUX_CFG(DM365,	GPIO40,		4,   26,     3,    0,	 false)
+MUX_CFG(DM365,	GPIO41,		4,   28,     3,    0,	 false)
+MUX_CFG(DM365,	GPIO42,		4,   30,     3,    0,	 false)
+MUX_CFG(DM365,	GPIO43,		0,   16,     3,    0,	 false)
+
+MUX_CFG(DM365,	GPIO52,		2,   10,     1,    0,	 false)
+MUX_CFG(DM365,	GPIO53,		2,   9,      1,    0,	 false)
+MUX_CFG(DM365,	GPIO54,		2,   9,      1,    0,	 false)
+MUX_CFG(DM365,	GPIO55,		2,   8,      1,    0,	 false)
+MUX_CFG(DM365,	GPIO56,		2,   7,      1,    0,	 false)
+
+MUX_CFG(DM365,	GPIO57,		0,   0,      0,    0,	 false) // unknown
+MUX_CFG(DM365,	GPIO58,		0,   0,      0,    0,	 false) // unknown
+MUX_CFG(DM365,	GPIO59,		0,   0,      0,    0,	 false) // unknown
+MUX_CFG(DM365,	GPIO60,		0,   0,      0,    0,	 false) // unknown
+MUX_CFG(DM365,	GPIO61,		0,   0,      0,    0,	 false) // unknown
+MUX_CFG(DM365,	GPIO62,		0,   0,      0,    0,	 false) // unknown
+MUX_CFG(DM365,	GPIO63,		0,   0,      0,    0,	 false) // unknown
+MUX_CFG(DM365,	GPIO64,		0,   0,      0,    0,	 false) // unknown
+
+MUX_CFG(DM365,	GPIO65,		0,   0,     0,    0,	 false) // unknown
+
+MUX_CFG(DM365,	GPIO68,		2,   2,     0,    0,	 false)
+MUX_CFG(DM365,	GPIO69,		2,   0,     0,    0,	 false)
+MUX_CFG(DM365,	GPIO70,		2,   0,     0,    0,	 false)
+MUX_CFG(DM365,	GPIO71,		2,   0,     0,    0,	 false)
+
+MUX_CFG(DM365,	GPIO72,		2,   4,     0,    0,	 false)
+
+MUX_CFG(DM365,	GPIO73,		2,   0,     0,    0,	 false) // unknown
+MUX_CFG(DM365,	GPIO74,		2,   0,     0,    0,	 false) // unknown
+MUX_CFG(DM365,	GPIO75,		2,   0,     0,    0,	 false) // unknown
+MUX_CFG(DM365,	GPIO76,		2,   0,     0,    0,	 false) // unknown
+MUX_CFG(DM365,	GPIO77,		2,   0,     0,    0,	 false) // unknown
+MUX_CFG(DM365,	GPIO78,		2,   0,     0,    0,	 false) // unknown
+
+MUX_CFG(DM365,	GPIO93,		0,   14,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO94,		0,   13,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO95,		0,   12,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO96,		0,   11,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO97,		0,   10,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO98,		0,   9,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO99,		0,   8,    1,    0,	 false)
+
+
+
+// end added by Gol
+
 MUX_CFG(DM365,	GPIO20,		3,   21,    3,    0,	 false)
-MUX_CFG(DM365,	GPIO21,		3,   23,    3,    0,	 false)
-MUX_CFG(DM365,	GPIO30,		4,   6,     3,	  0,	 false)
-MUX_CFG(DM365,	GPIO31,		4,   8,     3,	  0,	 false)
-MUX_CFG(DM365,	GPIO32,		4,   10,    3,	  0,	 false)
-MUX_CFG(DM365,	GPIO33,		4,   12,    3,	  0,	 false)
-MUX_CFG(DM365,	GPIO40,		4,   26,    3,	  0,	 false)
-MUX_CFG(DM365,	GPIO80,		1,   20,    3,	  1,	 false)
-MUX_CFG(DM365,	GPIO82,		1,   17,    1,    1,     false)
-MUX_CFG(DM365,	GPIO84_83,	1,   16,    1,	  1,	 false)
-
-MUX_CFG(DM365,	GPIO79,		1,   22,    1,    1,     false)
-MUX_CFG(DM365,	VCLK,		1,   22,    1,    0,     false)
-
-MUX_CFG(DM365,	VOUT_LCD_OE,	1,   17,    1,    0,     false)
-MUX_CFG(DM365,	VOUT_FIELD,	1,   18,    3,	  1,	 false)
-MUX_CFG(DM365,	VOUT_FIELD_G81,	1,   18,    3,	  0,	 false)
-MUX_CFG(DM365,	VOUT_R2,	1,   18,    3,	  2,	 false)
-MUX_CFG(DM365,	VOUT_B2,	1,   20,    3,    2,     false)
-MUX_CFG(DM365,	VOUT_HVSYNC,	1,   16,    1,	  0,	 false)
-MUX_CFG(DM365,	VOUT_COUTL_EN,	1,   0,     0xff, 0x55,  false)
-MUX_CFG(DM365,	VOUT_COUTH_EN,	1,   8,     0xff, 0x55,  false)
-MUX_CFG(DM365,	VIN_CAM_WEN,	0,   14,    3,	  0,	 false)
-MUX_CFG(DM365,	VIN_CAM_VD,	0,   13,    1,	  0,	 false)
-MUX_CFG(DM365,	VIN_CAM_HD,	0,   12,    1,	  0,	 false)
-MUX_CFG(DM365,	VIN_YIN4_7_EN,	0,   0,     0xff, 0,	 false)
-MUX_CFG(DM365,	VIN_YIN0_3_EN,	0,   8,     0xf,  0,	 false)
+MUX_CFG(DM365,	GPIO22,		3,   25,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO23,		3,   26,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO24,		3,   28,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO25,		3,   29,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO26,		3,   31,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO27,		4,    0,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO28,		4,    2,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO29,		4,    4,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO30,		4,    6,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO31,		4,    8,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO32,		4,   10,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO33,		4,   12,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO34,		4,   14,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO35,		4,   16,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO44,		0,   18,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO45,		0,   19,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO46,		0,   20,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO47,		0,   21,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO48,		0,   22,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO49,		0,   23,    1,    0,	 false)
+MUX_CFG(DM365,	GPIO50,		2,   12,    1,    1,	 false)
+MUX_CFG(DM365,	GPIO51,		2,   11,    1,    1,	 false)
+MUX_CFG(DM365,	GPIO66,		2,   0,     3,	  0,	 false)
+MUX_CFG(DM365,	GPIO67,		2,    0,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO79,		1,   22,    1,    1,	 false)
+MUX_CFG(DM365,	GPIO80,		1,   20,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO81,		1,   18,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO82,		1,   17,    1,    1,	 false)
+MUX_CFG(DM365,	GPIO83,		1,   16,    1,    1,	 false)
+MUX_CFG(DM365,	GPIO84,		1,   16,    1,    1,	 false)
+MUX_CFG(DM365,	GPIO85,		1,   14,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO86,		1,   12,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO87,		1,   10,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO88,		1,    8,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO89,		1,    6,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO90,		1,    4,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO91,		1,    2,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO92,		1,    0,    3,    0,	 false)
+MUX_CFG(DM365,	GPIO100,	0,    6,    3,    1,	 false)
+MUX_CFG(DM365,	GPIO101,	0,    4,    3,    1,	 false)
+MUX_CFG(DM365,	GPIO102,	0,    2,    3,    1,	 false)
+MUX_CFG(DM365,	GPIO103,	0,    0,    3,    1,	 false)
 
 MUX_CFG(DM365,	VIN_CAM_VD,	0,   13,    1,	  0,	 false)
 MUX_CFG(DM365,	VIN_CAM_HD,	0,   12,    1,	  0,	 false)
@@ -651,6 +726,8 @@ EVT_CFG(DM365,	EVT2_ASP_TX,         0,     1,    0,     false)
 EVT_CFG(DM365,	EVT3_ASP_RX,         1,     1,    0,     false)
 EVT_CFG(DM365,	EVT2_VC_TX,          0,     1,    1,     false)
 EVT_CFG(DM365,	EVT3_VC_RX,          1,     1,    1,     false)
+EVT_CFG(DM365,	EVT18_SPI3_TX, 3,     1,    1,     false)
+EVT_CFG(DM365,	EVT19_SPI3_RX, 4,     1,    1,     false)
 #endif
 };
 

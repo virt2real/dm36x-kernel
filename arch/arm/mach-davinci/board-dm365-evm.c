@@ -22,6 +22,7 @@
 #include <linux/leds.h>
 #include <linux/input.h>
 #include <linux/spi/spi.h>
+#include <linux/spi/eeprom.h>
 #include <linux/spi/spi_gpio.h>
 
 #include <asm/setup.h>
@@ -43,7 +44,9 @@
 #include <linux/videodev2.h>
 #include <media/davinci/videohd.h>
 
-//#define BITBANG_I2C
+#include "dm365_spi.h"
+#include <linux/delay.h>
+
 
 #ifdef BITBANG_I2C
 #include <linux/i2c-gpio.h>
@@ -132,7 +135,7 @@ static struct v4l2_input camera_inputs[] = {
 		.index = 0,
 		.name = "Camera",
 		.type = V4L2_INPUT_TYPE_CAMERA,
-//		.std = V4L2_STD_720P_30,
+		//.std = V4L2_STD_720P_30,
 	}
 };
 
@@ -159,15 +162,6 @@ static struct vpfe_subdev_info vpfe_sub_devs[] = {
 	},
 };
 
-static inline int have_imager(void)
-{
-#if defined(CONFIG_SOC_CAMERA_OV2643) || \
-	defined(CONFIG_SOC_CAMERA_OV2643_MODULE)
-	return 1;
-#else
-	return 0;
-#endif
-}
 
 static void dm365_camera_configure(void){
 	davinci_cfg_reg(DM365_CAM_OFF);
@@ -183,7 +177,6 @@ static void dm365_camera_configure(void){
 /* Set the input mux for TVP7002/TVP5146/MTxxxx sensors */
 static int dm365evm_setup_video_input(enum vpfe_subdev_id id)
 {
-	printk("dm365evm_setup_video_input\n");
 	/* Pull the camera out of reset */
 	gpio_request(31, "sensor_reset");
 	gpio_direction_output(31, 1);
@@ -220,7 +213,6 @@ static int mmc_get_ro(int module)
 static struct davinci_mmc_config dm365evm_mmc_config = {
 	.get_cd		= mmc_get_cd,
 	.get_ro		= mmc_get_ro,
-//	.get_ro		= cpld_mmc_get_ro,
 	.wires		= 4,
 	.max_freq	= 50000000,
 	.caps		= MMC_CAP_MMC_HIGHSPEED | MMC_CAP_SD_HIGHSPEED,
@@ -228,8 +220,6 @@ static struct davinci_mmc_config dm365evm_mmc_config = {
 };
 
 static struct davinci_mmc_config dm365evm_mmc1_config = {
-	//.get_cd		= mmc_get_cd,
-	//.get_ro		= mmc_get_ro,
 	.wires		= 4,
 	.max_freq	= 50000000,
 	.caps		= MMC_CAP_MMC_HIGHSPEED | MMC_CAP_SD_HIGHSPEED,
@@ -285,14 +275,67 @@ static void dm365evm_emac_configure(void)
 	davinci_cfg_reg(DM365_INT_EMAC_RXPULSE);
 	davinci_cfg_reg(DM365_INT_EMAC_TXPULSE);
 	davinci_cfg_reg(DM365_INT_EMAC_MISCPULSE);
+
+	davinci_cfg_reg(DM365_GPIO29);
+	printk("reseting EMAC\n");
+	gpio_request(29, "emac-reset");
+	gpio_direction_output(29, 1);
+	msleep(20);
+	gpio_direction_output(29, 0);
+	msleep(100);
+	gpio_direction_output(29, 1);
 }
 
 static void dm365evm_usb_configure(void)
 {
+	davinci_cfg_reg(DM365_GPIO66);
 	gpio_request(66, "usb");
-	gpio_direction_output(66, 0);
+	gpio_direction_output(66, 1);
 	setup_usb(500, 8);
 }
+
+static void dm365_ks8851_init(void){
+	gpio_request(0, "KSZ8851");
+	gpio_direction_input(0);
+	davinci_cfg_reg(DM365_EVT18_SPI3_TX);
+	davinci_cfg_reg(DM365_EVT19_SPI3_RX);
+}
+
+static struct davinci_spi_platform_data ksz8851_mcspi_config = {
+		//.io_type = SPI_IO_TYPE_DMA,
+		.version = SPI_VERSION_1,
+		.c2tdelay = 0,
+		.t2cdelay = 0
+};
+
+static struct spi_board_info ksz8851_snl_info[] __initdata = {
+	{
+		.modalias	= "ks8851",
+		.bus_num	= 3,
+		.chip_select	= 0,
+		.max_speed_hz	= 24000000,
+		.controller_data = &ksz8851_mcspi_config,
+		.irq		= IRQ_DM365_GPIO0
+     }
+};
+
+static struct davinci_spi_unit_desc dm365_evm_spi_udesc_KSZ8851 = {
+	.spi_hwunit	= 3,
+	.chipsel	= BIT(0),
+	.irq		= IRQ_DM365_SPIINT3_0,
+	.dma_tx_chan	= 18,
+	.dma_rx_chan	= 19,
+	.dma_evtq	= EVENTQ_3,
+	.pdata		= {
+		.version 	= SPI_VERSION_1,
+		.num_chipselect = 2,
+		//.intr_level = 0,
+		//.chip_sel = 0,
+		//.cs_hold = 0,
+		//.use_dma = EVENTQ_3,
+	}
+};
+
 
 static void __init evm_init_i2c(void)
 {
@@ -330,8 +373,9 @@ static void __init dm365_evm_map_io(void)
 
 static __init void dm365_evm_init(void)
 {
-	evm_init_i2c();
 	davinci_serial_init(&uart_config);
+
+	evm_init_i2c();
 
 	dm365evm_mmc_configure();
 
@@ -342,6 +386,10 @@ static __init void dm365_evm_init(void)
 
 	dm365evm_emac_configure();
 	dm365evm_usb_configure();
+
+	// try to init LAN module
+    //dm365_ks8851_init();
+    //davinci_init_spi(&dm365_evm_spi_udesc_KSZ8851, ARRAY_SIZE(ksz8851_snl_info), ksz8851_snl_info);
 
 	// try to init MMC0 (microSD)
 	davinci_setup_mmc(0, &dm365evm_mmc_config);
